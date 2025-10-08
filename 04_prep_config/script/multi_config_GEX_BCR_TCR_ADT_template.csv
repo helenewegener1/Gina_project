@@ -5,7 +5,7 @@ sample,GEX-SAMPLE_PREFIX
 create-bam,true
 
 [feature]
-reference,01_prep_feature_ref/out/feature_ref_HH117.csv
+reference,01_prep_feature_ref/out/feature_ref_FEATURE_SUFFIX.csv
 sample,ADT-SAMPLE_PREFIX
 
 [vdj]
