@@ -8,6 +8,11 @@
 #PBS -o /home/projects/dtu_00062/people/helweg/projects/Gina_project/00_data/script/download_cellranger_reference.log
 #PBS -N download_cellranger_reference
 
+WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project/00_data"
+
+# Navigate to your desired output location
+cd "$WD"
+
 # References downloaded from: https://www.10xgenomics.com/support/software/cell-ranger/downloads#reference-downloads
 
 # Human reference (GRCh38) - 2024-A
