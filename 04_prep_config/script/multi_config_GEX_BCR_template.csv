@@ -1,41 +1,12 @@
 [gene-expression]
-reference,/path/to/transcriptome --> VERSION DEPENDES ON CELL RANGER VERSION 
-fastq_dir,/path/to/fastqs
-sample,GEX-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
+reference,03_prep_references/out/refdata-gex-GRCh38-2024-A
+fastq_dir,02_prep_fastq/out
+sample,GEX-SAMPLE_PREFIX
 create-bam,true
 
-[feature]
-reference,/path/to/feature_ref.csv
-sample,ADT-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
-
 [vdj]
-reference,/path/to/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0 --> MAYBE THIS: /services/tools/cellranger/refdata/refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0
-fastq_dir,/path/to/fastqs
-
-[vdj-t]
-sample,TCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
-
-[vdj-b]
-sample,BCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
-
-
-# For re-running 
-[gene-expression]
-reference,/path/to/gex/ref
-fastq_dir,/path/to/fastqs
-sample,GEX-SAMPLE_PREFIX
-
-[feature]
-reference,/path/to/feature_ref.csv
-fastq_dir,/path/to/fastqs
-sample,ADT-SAMPLE_PREFIX
-
-[vdj]
-reference,/path/to/vdj/ref
-fastq_dir,/path/to/fastqs
+reference,03_prep_references/out/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0
+fastq_dir,02_prep_fastq/out
 
 [vdj-b]
 sample,BCR-SAMPLE_PREFIX
-
-[vdj-t]
-sample,TCR-SAMPLE_PREFIX
