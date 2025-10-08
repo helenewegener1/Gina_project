@@ -45,7 +45,7 @@ HH117_meta_clean <- HH117_meta_clean %>% select(id, name, read, pattern, sequenc
 
 # Export as csv
 # output: feature_ref.csv
-write.csv(HH117_meta_clean, "01_wrangle_metadata/out/feature_ref_HH117.csv", quote = FALSE, row.names = FALSE)
+write.csv(HH117_meta_clean, "01_prep_feature_ref/out/feature_ref_HH117.csv", quote = FALSE, row.names = FALSE)
 
 rm(HH117_meta, HH117_meta_clean)
 
@@ -94,7 +94,7 @@ HH119_pool_1_meta_clean <- HH119_pool_1_meta_clean %>% select(id, name, read, pa
 
 # Export as csv
 # output: feature_ref.csv
-write.csv(HH119_pool_1_meta_clean, "01_wrangle_metadata/out/feature_ref_HH119_pool_1.csv", quote = FALSE, row.names = FALSE)
+write.csv(HH119_pool_1_meta_clean, "01_prep_feature_ref/out/feature_ref_HH119_pool_1.csv", quote = FALSE, row.names = FALSE)
 
 rm(HH119_pool_1_meta_clean)
 
@@ -136,6 +136,6 @@ HH119_pool_2_meta_clean <- HH119_pool_2_meta_clean %>% select(id, name, read, pa
 
 # Export as csv
 # output: feature_ref.csv
-write.csv(HH119_pool_2_meta_clean, "01_wrangle_metadata/out/feature_ref_HH119_pool_2.csv", quote = FALSE, row.names = FALSE)
+write.csv(HH119_pool_2_meta_clean, "01_prep_feature_ref/out/feature_ref_HH119_pool_2.csv", quote = FALSE, row.names = FALSE)
 
 rm(HH119_pool_2_meta_clean)
