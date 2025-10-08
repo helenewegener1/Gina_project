@@ -1,0 +1,2 @@
+/var/spool/torque/mom_priv/jobs/60141940.SC: line 21: syntax error near unexpected token `<'
+/var/spool/torque/mom_priv/jobs/60141940.SC: line 21: `read -r -d '' -a samples_array < <(ls "$SAMPLE_DIR" | awk -F '_' '{print $1}' | sort | uniq)'
