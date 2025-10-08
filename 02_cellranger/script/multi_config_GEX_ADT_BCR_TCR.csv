@@ -1,6 +1,6 @@
 [gene-expression]
 reference,00_data/refdata-gex-GRCh38-2024-A
-fastq_dir,/home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
+fastq_dir,02_prep_fastq/out
 sample,GEX-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 create-bam,true
 
@@ -10,7 +10,7 @@ sample,ADT-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 
 [vdj]
 reference,00_data/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0
-fastq_dir,/home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
+fastq_dir,02_prep_fastq/out
 
 [vdj-t]
 sample,TCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
