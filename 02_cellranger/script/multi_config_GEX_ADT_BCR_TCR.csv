@@ -10,32 +10,10 @@ sample,ADT-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 
 [vdj]
 reference,00_data/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0
-fastq_dir,/path/to/fastqs
+fastq_dir,/home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
 
 [vdj-t]
 sample,TCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 
 [vdj-b]
 sample,BCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
-
-
-# For re-running 
-[gene-expression]
-reference,/path/to/gex/ref
-fastq_dir,/path/to/fastqs
-sample,GEX-SAMPLE_PREFIX
-
-[feature]
-reference,/path/to/feature_ref.csv
-fastq_dir,/path/to/fastqs
-sample,ADT-SAMPLE_PREFIX
-
-[vdj]
-reference,/path/to/vdj/ref
-fastq_dir,/path/to/fastqs
-
-[vdj-b]
-sample,BCR-SAMPLE_PREFIX
-
-[vdj-t]
-sample,TCR-SAMPLE_PREFIX

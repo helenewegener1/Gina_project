@@ -9,7 +9,7 @@
 #PBS -N run_cellranger
 
 # Define working directory 
-WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project/02_cellranger/script"
+WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project"
 
 module load tools
 module load cellranger/9.0.1
