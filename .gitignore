@@ -1,4 +1,7 @@
 00_data/*.fastq.gz
 00_data/*.xlsx
 00_data/refdata*
+00_data/script/download_cellranger_reference.err
+
+02_prep_fastq/out/
 
