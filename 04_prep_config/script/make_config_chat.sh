@@ -12,7 +12,7 @@ CONFIG_DIR="/out"
 # --- Setup ---
 
 cd "$WD"
-mkdir -p "$CONFIG_DIR"
+mkdir -p "${CONFIG_DIR}"
 
 # Print header
 echo "Sample_ID,GEX_Present,ADT_Present,TCR_Present,BCR_Present,Required_Template"
@@ -62,9 +62,34 @@ for ID in "${SAMPLE_IDS[@]}"; do
   
     OUTPUT_CSV="${CONFIG_DIR}/multi_config_${ID}.csv"
     
-    # Replace SAMPLE_PREFIX placeholder and create the final CSV file
-    sed "s/SAMPLE_PREFIX/${ID}/g" "script/${TEMPLATE_NAME}" > "${OUTPUT_CSV}"
-  
+    # 3a. Initial substitution: Copy template and replace SAMPLE_PREFIX (must run first)
+    sed "s/SAMPLE_PREFIX/${ID}/g" "${TEMPLATE_PATH}" > "${OUTPUT_CSV}"
+
+    # 3b. Conditional substitution: Replace FEATURE_REF using 'sed -i' on the new file
+    if [ "$ADT_STATUS" == "Yes" ]; then 
+        
+        FEATURE_REF_PATH=""
+
+        # Check for the most specific case first: HH119 and Pool2
+        if [[ "$ID" == *"HH119"* ]] && [[ "$ID" == *"Pool2"* ]]; then
+            FEATURE_REF_PATH="HH119_pool_2}"
+        
+        # Check for generic HH119 (implies Pool 1 if Pool 2 was not matched)
+        elif [[ "$ID" == *"HH119"* ]]; then
+            FEATURE_REF_PATH="HH119_pool_1}"
+        
+        # Check for HH117
+        elif [[ "$ID" == *"HH117"* ]]; then
+            FEATURE_REF_PATH="HH117}"
+        fi
+        
+        # Execute in-place replacement if a reference path was determined
+        if [ -n "$FEATURE_REF_PATH" ]; then
+            # Use sed -i (in-place) to modify the file created in step 3a
+            sed -i "s/FEATURE_REF/${FEATURE_REF_PATH}/g" "${OUTPUT_CSV}"
+        fi
+    fi
+
   # Note: Removed "Generated config file" echo for brevity
   fi
   
