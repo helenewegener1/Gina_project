@@ -1,8 +1,11 @@
-Data is stored on computerome: /home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
+Excel files in this folder are send from Gina and contain information about which hashtags are used for which follicles in the SI-PP.
+The files are used to create feature_ref files in 01_prep_feature_ref.
+The HH117 file contain information about hashtags used for the patient with Crohns Disease.
+The HH119 file contain information about hashtags used for the patient with Colorectal Cancer.
+
+fastq files are stored on computerome: /home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
 
 Samples:
-
-
 GEX-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 ADT-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
 BCR-HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH
