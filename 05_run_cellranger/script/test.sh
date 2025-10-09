@@ -4,8 +4,8 @@
 #PBS -l gpus=0
 #PBS -l mem=128GB
 #PBS -l walltime=24:00:00
-#PBS -e /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/run_cellranger.err
-#PBS -o /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/run_cellranger.log
+#PBS -e /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/test.err
+#PBS -o /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/test.log
 #PBS -N run_cellranger
 
 # Define working directory (which is the out dir here)
