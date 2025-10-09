@@ -11,17 +11,17 @@ HH119 is a patient with Colorectal Cancer where the sample have been taken from 
 
 The samples from SI-PP are separated into follicles that each are labeled with a hashtag.
 
-**Patient** 
+### Patient 
 HH117: patient with Crohns Disease (CD)
 
 HH119: patient with Colorectal Cancer (CRC) ~ Control 
 
-**Inflammation Status**
+### Inflammation Status
 nonINF: non-inflamed
 
 INF: inflamed 
 
-**Library Types (Sequencing Data)**
+### Library Types (Sequencing Data)
 GEX: Gene expression 
 
 ADT: Antibody Capture
@@ -31,19 +31,28 @@ BCR: B cell receptor
 TCR: T cell receptor 
 
 
-**Sites in the Intestine**
+### Sites in the Intestine
 SI-PP: Small Intestine - Peyer's Patch
+
 SI-MILF: Small Intestine - Muscularis layer of the Intestinal Lamina Fibrinogen-rich area
+
 SILP: Small Intestine - Lamina Propria
+
 COLP: Colon - Lamina Propria
+
 CO-SMILF: Colon - Submucosal layer or Muscularis layer of the Intestinal Lamina Fibrinogen-rich area
 
-**Cell Types**
+### Cell Types
 CD19: Cluster of Differentiation 19 (Marker for B-cells)
+
 GC: Germinal Center (B-cells)
+
 TFH: T Follicular Helper (T-cells)
+
 PB: Plasmablast
+
 HLADR: Human Leukocyte Antigen – DR isotype (MHC Class II molecule)
+
 PC: Plasma Cell
 
 ## Structure of analysis 
