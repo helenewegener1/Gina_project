@@ -8,7 +8,7 @@ HH119 is a patient with Colorectal Cancer where the sample have been taken from 
 The samples from SI-PP are separated into follicles that each are labeled with a hashtag.
 
 ### Patient 
-HH117: patient with Crohns Disease (CD)
+**HH117**: patient with Crohns Disease (CD)
 
 **HH119**: patient with Colorectal Cancer (CRC) ~ Control 
 
