@@ -4,14 +4,14 @@
 #PBS -l gpus=0
 #PBS -l mem=128GB
 #PBS -l walltime=24:00:00
-#PBS -e /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_cellranger/script/run_cellranger.err
-#PBS -o /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_cellranger/script/run_cellranger.log
+#PBS -e /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/run_cellranger.err
+#PBS -o /home/projects/dtu_00062/people/helweg/projects/Gina_project/05_run_cellranger/script/run_cellranger.log
 #PBS -N run_cellranger
 
-# Define working directory 
-WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project/"
-OUT_DIR="05_run_cellranger/out/"
-CONFIG_DIR="04_prep_config/out"
+# Define working directory (which is the out dir here)
+WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project/05_run_cellranger/out"
+SAMPLE_DIR="/home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF"
+#CONFIG_DIR="/home/people/helweg/ciir/people/helweg/projects/Gina_project/04_prep_config/out"
 
 module load tools
 module load cellranger/9.0.1
@@ -26,26 +26,14 @@ read -r -d '' -a samples_array < <(ls "$SAMPLE_DIR" | awk -F '_' '{print $1}' | 
 # Run cellranger multi for all IDs
 for ID in "${samples_array[@]}"; do
     
-    echo "--- Starting analysis for sample: ${ID} ---"
-    echo "${OUT_DIR}/${ID}_Multi_Analysis"
-    echo "${CONFIG_DIR}/multi_config_${ID}"
-
-    # cellranger multi \
-    #     --id="${OUT_DIR}/${ID}_Multi_Analysis" \
-    #     --csv="${CONFIG_DIR}/multi_config_${ID}" \
-    #     --localcores=32 \
-    #     --localmem=128
+  echo "--- Starting analysis for sample: ${ID} ---"
+  # echo "${OUT_DIR}/${ID}_Multi_Analysis"
+  # echo "${CONFIG_DIR}/multi_config_${ID}.csv"
+  
+  cellranger multi \
+      --id="res_${ID}" \
+      --csv="../../04_prep_config/out/multi_config_${ID}.csv" \
+      --localcores=32 \
+      --localmem=128
     
 done
-
-# Reference from Fred:
-# --transcriptome /services/tools/cellranger/refdata/refdata-cellranger-mm10-2.1.0
-
-# cellranger count \
-#   --id=LP_CRAM1 \
-#   --transcriptome=/home/projects/dtu_00062/people/helweg/LPcDC_cellranger/mouse_reference/refdata-gex-GRCm39-2024-A \
-#   --fastqs=../fastqs \
-#   --sample=ERR12552061 \
-#   --localcores=8 \
-#   --localmem=64 \
-#   --create-bam=false
