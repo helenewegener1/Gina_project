@@ -24,10 +24,6 @@ echo "Sample_ID,GEX_Present,ADT_Present,TCR_Present,BCR_Present,Required_Templat
 read -r -d '' -a samples_array < <(ls "$SAMPLE_DIR" | awk -F '_' '{print $1}' | awk -F '-' '{sub($1 FS, "", $0); print $0}' | sort | uniq)
 
 for ID in "${samples_array[@]}"; do
-
-  if [[ "$ID" == "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" ]]; then
-        continue 
-  fi
   
   # --- 1. Check for library files using single-line conditional assignment --- 
   # (Sets status to 'Yes' if files exist, 'No' otherwise)
