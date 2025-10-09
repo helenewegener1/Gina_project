@@ -2,7 +2,7 @@
 B cells 
 
 ## Data 
-Human samples. 
+Human samples. \\
 HH117 is a patient with Crohns Disease where tissue have been taken from a inflamed (INF) and non-inflamed (nonINF) site.
 HH119 is a patient with Colorectal Cancer where the sample have been taken from a non-tumor cite and is therefore used as the best healthy control we can get.
 
