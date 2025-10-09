@@ -3,7 +3,7 @@ reference,/home/people/helweg/ciir/people/helweg/projects/Gina_project/03_prep_r
 create-bam,true
 
 [vdj]
-reference,03_prep_references/out/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0
+reference,/home/people/helweg/ciir/people/helweg/projects/Gina_project/03_prep_references/out/refdata-cellranger-vdj-GRCh38-alts-ensembl-7.1.0
 
 [feature]
 reference,/home/people/helweg/ciir/people/helweg/projects/Gina_project/01_prep_feature_ref/out/feature_ref_HH117.csv
