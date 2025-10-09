@@ -1,6 +1,3 @@
-# Gina_project
-B cells 
-
 ## Data 
 Human samples. 
 
@@ -57,11 +54,17 @@ PC: Plasma Cell
 
 ## Structure of analysis 
 fastq files on computerome: /home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF
-00_data: Excel files with information about hashtag antibodies from each 
+
+**00_data**: Excel files with information about hashtag antibodies from each 
+
 01_prep_feature_ref: Using the excel files in 00_data to make feature_ref files for each hashtag-combination. 
+
 02_prep_fastq: fastq files are copied from the original directory into a structure where all fastq files from the same sample are in one folder. This might not be needed anyways...
-03_prep_references: Download human genome reference and human vdj reference for B and T cell receptors. 
+
+03_prep_references: Download human genome reference and human vdj reference for B and T cell receptors.
+
 04_prep_config: From self-made template files, there is created a config file per sample depending on which files exist for the given sample. 
+
 05_run_cellranger: Running cellranger multi using the config files. 
 
 
