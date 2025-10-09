@@ -2,25 +2,34 @@
 B cells 
 
 ## Data 
-Human samples. \\
+Human samples. 
+
+
 HH117 is a patient with Crohns Disease where tissue have been taken from a inflamed (INF) and non-inflamed (nonINF) site.
+
 HH119 is a patient with Colorectal Cancer where the sample have been taken from a non-tumor cite and is therefore used as the best healthy control we can get.
 
 The samples from SI-PP are separated into follicles that each are labeled with a hashtag.
 
 **Patient** 
 HH117: patient with Crohns Disease (CD)
+
 HH119: patient with Colorectal Cancer (CRC) ~ Control 
 
 **Inflammation Status**
 nonINF: non-inflamed
+
 INF: inflamed 
 
 **Library Types (Sequencing Data)**
 GEX: Gene expression 
+
 ADT: Antibody Capture
+
 BCR: B cell receptor 
+
 TCR: T cell receptor 
+
 
 **Sites in the Intestine**
 SI-PP: Small Intestine - Peyer's Patch
