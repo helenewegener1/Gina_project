@@ -8,3 +8,4 @@
 02_prep_fastq/out/
 03_prep_references/out/
 05_run_cellranger/out/
+
