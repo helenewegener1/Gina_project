@@ -5,7 +5,6 @@ library(Seurat)
 library(glue)
 
 # Samples
-# samples <- 
 samples <- list.files("05_run_cellranger/out/") %>% str_split_i("_", 2)
 
 # Prep out list
@@ -74,27 +73,59 @@ for (sample in samples){
   
   #################### Import VDJ Annotation Files (TCR and BCR) ##################### 
   
-  # GINA: WHICH COLUMNS ARE WE INTERSTED IN?
+ 
   
   # Check if BCR data is available 
-  if ("vdj_5" %in% list.files(OUTS_DIR)){
+  if ("vdj_t" %in% list.files(OUTS_DIR)){
     tcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_t/filtered_contig_annotations.csv"))
   } 
   
   if ("vdj_b" %in% list.files(OUTS_DIR)){
     bcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_b/filtered_contig_annotations.csv"))
   } 
+
+  # Investigate vdj data
+  tcr_meta$barcode %>% length() / 2
+  tcr_meta$barcode %>% unique() %>% length()
+
+  bcr_meta$barcode %>% length() / 2
+  bcr_meta$barcode %>% unique() %>% length()
+  
+  bcr_meta$contig_id %>% length()
+  bcr_meta$contig_id %>% unique() %>% length()
+  
+  seurat_obj[[]] %>% nrow()
+  
+  cells <- rownames(seurat_obj[[]])
+  t_cells <- tcr_meta$barcode %>% unique()
+  b_cells <- bcr_meta$barcode %>% unique()
+  
+  table(tcr_meta$is_cell, useNA = "ifany")
+  table(bcr_meta$is_cell, useNA = "ifany")
+  
+  table(t_cells %in% b_cells)
+  table(t_cells %in% cells)
+  table(b_cells %in% cells)
+  b_cells[!b_cells %in% cells]
+  
+  
+  tcr_meta %>% pivot_wider(names_from = contig_id, values_from = v_gene) %>% 
+    colnames()
+  
+  # Test wrangling
+  
+  # Can we safely remove barcode from contig ids
+  table(tcr_meta$barcode == str_split_i(tcr_meta$contig_id, "_", 1))
+  table(bcr_meta$barcode == str_split_i(bcr_meta$contig_id, "_", 1))
+  
+  # GINA: WHICH COLUMNS ARE WE INTERSTED IN?
+  tcr_meta_clean <- tcr_meta %>% select(barcode, contig_id, chain, v_gene, d_gene, j_gene, c_gene) %>% 
+    mutate(contig_id = str_remove_all(contig_id, glue("{barcode}_"))) %>% 
+    pivot_wider(names_from = contig_id, 
+                values_from = c(chain, v_gene, d_gene, j_gene, c_gene)) %>% view()
+
   
 
-  # # Wrangle meta
-  # tcr_meta$barcode %>% length()
-  # tcr_meta$barcode %>% unique() %>% length()
-  # 
-  # bcr_meta$barcode %>% length()
-  # bcr_meta$barcode %>% unique() %>% length()
-  # 
-  # seurat_obj[[]] %>% dim()
-  # 
   # # We must ensure VDJ data is filtered down to one productive chain per cell 
   # # and format it for merging (using Seurat's recommended functions or custom scripts)
   # 
