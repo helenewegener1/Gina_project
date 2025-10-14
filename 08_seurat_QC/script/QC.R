@@ -1,4 +1,4 @@
-setwd("~/Documents/projects/project_cDC/LPcDC/")
+setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -12,19 +12,8 @@ library(DoubletFinder)
 library(glmGamPoi)
 
 # Load data
-seurat_obj_list <- readRDS("01_make_seurat_object/out/seurat_obj_list.rds") # raw = prefiltering 
-seurat_obj_roughQC_list <- readRDS("02_roughQC/out/seurat_obj_roughQC_list.rds")
-
-# Clean up Sample GSM9122899
-seurat_obj_list$GSM9122899@assays$RNA$counts <- seurat_obj_list$GSM9122899@assays$RNA$`counts.Gene Expression`
-seurat_obj_list$GSM9122899@assays$RNA$`counts.Gene Expression` <- NULL
-seurat_obj_list$GSM9122899@assays$RNA$`counts.Antibody Capture` <- NULL
-Layers(seurat_obj_list$GSM9122899)
-
-seurat_obj_roughQC_list$GSM9122899@assays$RNA$counts <- seurat_obj_roughQC_list$GSM9122899@assays$RNA$`counts.Gene Expression`
-seurat_obj_roughQC_list$GSM9122899@assays$RNA$`counts.Gene Expression` <- NULL
-seurat_obj_roughQC_list$GSM9122899@assays$RNA$`counts.Antibody Capture` <- NULL
-Layers(seurat_obj_roughQC_list$GSM9122899)
+seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # raw = prefiltering 
+seurat_obj_roughQC_list <- readRDS("07_seurat_roughQC/out/seurat_obj_roughQC_list.rds")
 
 # Investigate need for removal of empty droplets 
 # https://bioconductor.org/packages/release/bioc/vignettes/DropletUtils/inst/doc/DropletUtils.html
@@ -158,28 +147,16 @@ for (sample_name in names(seurat_obj_roughQC_list)){
 #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### #### 
 # N cells before and after DoubletFinder
 
-seurat_obj_roughQC_list$GSM7789315 %>% ncol()
-seurat_obj_finalQC_list$GSM7789315 %>% ncol()
-
-seurat_obj_roughQC_list$GSM8672515 %>% ncol()
-seurat_obj_finalQC_list$GSM8672515 %>% ncol()
-
-seurat_obj_roughQC_list$GSM9122899 %>% ncol()
-seurat_obj_finalQC_list$GSM9122899 %>% ncol()
-
-seurat_obj_roughQC_list$GSE255350 %>% ncol()
-seurat_obj_finalQC_list$GSE255350 %>% ncol()
-
-seurat_obj_roughQC_list$CRAM1 %>% ncol()
-seurat_obj_finalQC_list$CRAM1 %>% ncol()
-
-seurat_obj_roughQC_list$CRAM2 %>% ncol()
-seurat_obj_finalQC_list$CRAM2 %>% ncol()
-
+for (sample_name in names(seurat_obj_roughQC_list)){
+  print(sample_name)
+  print(seurat_obj_roughQC_list[[sanple_name]] %>% ncol()) 
+  print(seurat_obj_finalQC_list[[sanple_name]] %>% ncol())
+  print(" ")
+}
 
 ########################################## Export list of filtered Seurat objects ##########################################
 
-saveRDS(seurat_obj_finalQC_list, "03_QC/out/seurat_obj_finalQC_list.rds")
+saveRDS(seurat_obj_finalQC_list, "08_seurat_QC/out/seurat_obj_finalQC_list.rds")
 
 
 

@@ -53,9 +53,9 @@ for (sample in samples){
     
     # Normalize the ADT data (often using the CLR method)
     seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
-    
+
     # Find variable features in the ADT assay (optional but good practice)
-    seurat_obj <- FindVariableFeatures(seurat_obj, selection.method = "vst", assay = "ADT")
+    seurat_obj <- HTODemux(seurat_obj, assay = "ADT", positive.quantile = 0.99)
     
     
     ################### If only gene expression data is available ################### 
@@ -72,8 +72,9 @@ for (sample in samples){
   }
   
   #################### Import VDJ Annotation Files (TCR and BCR) ##################### 
-  
- 
+
+  tcr_meta <- NULL
+  bcr_meta <- NULL
   
   # Check if BCR data is available 
   if ("vdj_t" %in% list.files(OUTS_DIR)){
@@ -84,69 +85,56 @@ for (sample in samples){
     bcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_b/filtered_contig_annotations.csv"))
   } 
 
-  # Investigate vdj data
-  tcr_meta$barcode %>% length() / 2
-  tcr_meta$barcode %>% unique() %>% length()
-
-  bcr_meta$barcode %>% length() / 2
-  bcr_meta$barcode %>% unique() %>% length()
-  
-  bcr_meta$contig_id %>% length()
-  bcr_meta$contig_id %>% unique() %>% length()
-  
-  seurat_obj[[]] %>% nrow()
-  
-  cells <- rownames(seurat_obj[[]])
-  t_cells <- tcr_meta$barcode %>% unique()
-  b_cells <- bcr_meta$barcode %>% unique()
-  
-  table(tcr_meta$is_cell, useNA = "ifany")
-  table(bcr_meta$is_cell, useNA = "ifany")
-  
-  table(t_cells %in% b_cells)
-  table(t_cells %in% cells)
-  table(b_cells %in% cells)
-  b_cells[!b_cells %in% cells]
-  
-  
-  tcr_meta %>% pivot_wider(names_from = contig_id, values_from = v_gene) %>% 
-    colnames()
-  
-  # Test wrangling
+  # Wrangling
   
   # Can we safely remove barcode from contig ids
-  table(tcr_meta$barcode == str_split_i(tcr_meta$contig_id, "_", 1))
-  table(bcr_meta$barcode == str_split_i(bcr_meta$contig_id, "_", 1))
-  
-  # GINA: WHICH COLUMNS ARE WE INTERSTED IN?
-  tcr_meta_clean <- tcr_meta %>% select(barcode, contig_id, chain, v_gene, d_gene, j_gene, c_gene) %>% 
-    mutate(contig_id = str_remove_all(contig_id, glue("{barcode}_"))) %>% 
-    pivot_wider(names_from = contig_id, 
-                values_from = c(chain, v_gene, d_gene, j_gene, c_gene)) %>% view()
+  # table(tcr_meta$barcode == str_split_i(tcr_meta$contig_id, "_", 1))
+  # table(bcr_meta$barcode == str_split_i(bcr_meta$contig_id, "_", 1))
 
+  # Wrangle TCR data so it can be added to the metadata of the seurat object
+  if (!is.null(tcr_meta)){
+    
+    index_barcode <- which(colnames(tcr_meta) == "barcode")
+    index_contig_id <- which(colnames(tcr_meta) == "contig_id")
+    
+    tcr_meta_clean <- tcr_meta %>% 
+      mutate(contig_id = str_remove_all(contig_id, glue("{barcode}_"))) %>% 
+      pivot_wider(id_cols = barcode,
+                  names_from = contig_id, 
+                  values_from = colnames(tcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
+      column_to_rownames("barcode")
+    
+    # Add TCR data to seurat object
+    seurat_obj <- AddMetaData(
+      seurat_obj,
+      metadata = tcr_meta_clean
+    )
+    
+  }
+  
+  # Wrangle BCR data so it can be added to the metadata of the seurat object
+  if (!is.null(bcr_meta)){
+    
+    index_barcode <- which(colnames(bcr_meta) == "barcode")
+    index_contig_id <- which(colnames(bcr_meta) == "contig_id")
+    
+    bcr_meta_clean <- bcr_meta %>% 
+      mutate(contig_id = str_remove_all(contig_id, glue("{barcode}_"))) %>% 
+      pivot_wider(id_cols = barcode,
+                  names_from = contig_id, 
+                  values_from = colnames(bcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
+      column_to_rownames("barcode")
+    
+    
+    # Add BCR data to seurat object
+    seurat_obj <- AddMetaData(
+      seurat_obj,
+      metadata = bcr_meta_clean
+    )
+    
+  }
   
 
-  # # We must ensure VDJ data is filtered down to one productive chain per cell 
-  # # and format it for merging (using Seurat's recommended functions or custom scripts)
-  # 
-  # # --- Use the Seurat utility functions for VDJ data preparation ---
-  # # This step aggregates the contigs (multiple sequences per cell) into
-  # # summary information (e.g., VDJ clonotype, chains, and productivity).
-  # 
-  # # Add TCR data
-  # seurat_obj <- AddMetaData(
-  #   seurat_obj, 
-  #   metadata = tcr_meta, 
-  #   col.name = "TCR_meta"
-  # )
-  # 
-  # # Add BCR data
-  # seurat_obj <- AddMetaData(
-  #   seurat_obj, 
-  #   metadata = bcr_meta, 
-  #   col.name = "BCR_meta"
-  # )
-  # 
   # CRITICAL STEP: Add clonotype info (the actual T/B cell ID)
   # This usually requires running a specialized function to simplify the contig data.
   # E.g., Use the 'clonotype' and 'raw_clonotype_id' columns from the filtered_contig_annotations.csv
