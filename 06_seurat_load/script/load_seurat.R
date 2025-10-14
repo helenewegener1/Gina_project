@@ -160,7 +160,7 @@ for (sample in samples){
 
 ######################## Export list of seurat objects ######################### 
 
-saveRDS(seurat_obj_list, "06_load_seurat/out/seurat_obj_list.rds")
+saveRDS(seurat_obj_list, "06_seurat_load/out/seurat_obj_list.rds")
 
 
 
