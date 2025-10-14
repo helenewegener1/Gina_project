@@ -10,7 +10,7 @@ library(patchwork)
 source("07_seurat_roughQC/script/functions.R")
 
 # Load data
-seurat_obj_list <- readRDS("06_load_seurat/out/seurat_obj_list.rds")
+seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds")
 
 # Initialize filtered list
 seurat_obj_roughQC_list <- list()

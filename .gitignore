@@ -9,9 +9,9 @@
 03_prep_references/out/
 05_run_cellranger/out/
 !/05_run_cellranger/out/res_*/outs/per_sample_outs/res_*/web_summary.html
-
 05_run_cellranger/out_test/
-06_load_seurat/out/
+06_seurat_load/out/
 07_seurat_roughQC/out/
+08_seurat_QC/out/
 
 
