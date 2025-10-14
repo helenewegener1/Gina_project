@@ -5,60 +5,87 @@ library(Seurat)
 library(glue)
 
 # Samples
-samples <- c("HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH")
+# samples <- 
+samples <- list.files("05_run_cellranger/out/") %>% str_split_i("_", 2)
 
 # Prep out list
 seurat_obj_list <- list()
 
 for (sample in samples){
   
+  # sample <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  # sample <- samples[[1]]
+  
   # Define path to cellranger output
   # The files in the per_sample_outs directory have been demultiplexed to single samples.
   # Read more about output of cellrange multi: https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-3p-outputs-cellplex
-  OUTS_DIR <- glue("05_run_cellranger/out_test/res_{sample}/outs/per_sample_outs/res_{sample}")
-  
-  ################### Step 1: Import Gene Expression (GEX) Data ################## 
+  OUTS_DIR <- glue("05_run_cellranger/out/res_{sample}/outs/per_sample_outs/res_{sample}")
   
   # Read GEX counts (the default method for 10x data)
-  gex.data <- Read10X(data.dir =glue("{OUTS_DIR}/count/sample_filtered_feature_bc_matrix"))
+  gex.data <- Read10X(data.dir = glue("{OUTS_DIR}/count/sample_filtered_feature_bc_matrix"))
   
   # Create the base Seurat object
-  # Note: The GEX data is automatically stored in the 'RNA' assay.
-  seurat_obj <- CreateSeuratObject(
-    counts = gex.data$`Gene Expression`,
-    project = "Multi_Analysis", 
-    min.cells = 3,
-    min.features = 200
-  )
   
-  ################## Step 2: Import Antibody Capture (ADT) Data ##################
+  ######################## If antibody data available ######################## 
+  if (length(gex.data) == 2 & "Gene Expression" %in% names(gex.data)){ 
+    
+    
+    # Import Gene Expression (GEX) Data 
+    seurat_obj <- CreateSeuratObject(
+      counts = gex.data$`Gene Expression`,
+      project = "Multi_Analysis", 
+      min.cells = 3,
+      min.features = 200
+    )
+    
+    # Import Antibody Capture (ADT) Data 
+    
+    # Extract the ADT count matrix from the list
+    adt_counts <- gex.data$`Antibody Capture`
+    
+    # Get the list of cell barcodes that exist in the GEX-based Seurat object
+    gex_cells <- colnames(seurat_obj)
+    
+    # Subset the ADT matrix to include ONLY those GEX cells
+    adt_counts_aligned <- adt_counts[, gex_cells]
+    
+    # Add ADT data as a new assay (e.g., "ADT")
+    seurat_obj[["ADT"]] <- CreateAssayObject(counts = adt_counts_aligned) 
+    
+    # Normalize the ADT data (often using the CLR method)
+    seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
+    
+    # Find variable features in the ADT assay (optional but good practice)
+    seurat_obj <- FindVariableFeatures(seurat_obj, selection.method = "vst", assay = "ADT")
+    
+    
+    ################### If only gene expression data is available ################### 
+  } else { 
+    
+    # Import Gene Expression (GEX) Data 
+    seurat_obj <- CreateSeuratObject(
+      counts = gex.data,
+      project = "Multi_Analysis", 
+      min.cells = 3,
+      min.features = 200
+    )
+    
+  }
   
-  # Extract the ADT count matrix from the list
-  adt_counts <- gex.data$`Antibody Capture`
-  
-  # Get the list of cell barcodes that exist in the GEX-based Seurat object
-  gex_cells <- colnames(seurat_obj)
-  
-  # Subset the ADT matrix to include ONLY those GEX cells
-  adt_counts_aligned <- adt_counts[, gex_cells]
-  
-  # Add ADT data as a new assay (e.g., "ADT")
-  seurat_obj[["ADT"]] <- CreateAssayObject(counts = adt_counts_aligned) 
-  
-  # Normalize the ADT data (often using the CLR method)
-  seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
-  
-  # Find variable features in the ADT assay (optional but good practice)
-  seurat_obj <- FindVariableFeatures(seurat_obj, selection.method = "vst", assay = "ADT")
-  
-  #################### Step 3: Import VDJ Data (TCR and BCR) ##################### 
+  #################### Import VDJ Annotation Files (TCR and BCR) ##################### 
   
   # GINA: WHICH COLUMNS ARE WE INTERSTED IN?
   
-  # # Load and filter the VDJ annotation files
-  # tcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_t/filtered_contig_annotations.csv"))
-  # bcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_b/filtered_contig_annotations.csv"))
-  # 
+  # Check if BCR data is available 
+  if ("vdj_5" %in% list.files(OUTS_DIR)){
+    tcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_t/filtered_contig_annotations.csv"))
+  } 
+  
+  if ("vdj_b" %in% list.files(OUTS_DIR)){
+    bcr_meta <- read.csv(glue("{OUTS_DIR}/vdj_b/filtered_contig_annotations.csv"))
+  } 
+  
+
   # # Wrangle meta
   # tcr_meta$barcode %>% length()
   # tcr_meta$barcode %>% unique() %>% length()
