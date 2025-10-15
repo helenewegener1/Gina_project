@@ -1,4 +1,4 @@
-setwd("~/ciir/people/helweg/projects/Gina_project/")
+# setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -27,7 +27,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("03_QC/plot/empty_droplets_plot_raw_{sample_name}.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/empty_droplets_plot_raw_{sample_name}.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} raw (prefilter) Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -48,7 +48,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("03_QC/plot/empty_droplets_plot_roughQC_{sample_name}.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/empty_droplets_plot_roughQC_{sample_name}.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} roughQC-filtered Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -149,8 +149,8 @@ for (sample_name in names(seurat_obj_roughQC_list)){
 
 for (sample_name in names(seurat_obj_roughQC_list)){
   print(sample_name)
-  print(seurat_obj_roughQC_list[[sanple_name]] %>% ncol()) 
-  print(seurat_obj_finalQC_list[[sanple_name]] %>% ncol())
+  print(seurat_obj_roughQC_list[[sample_name]] %>% ncol()) 
+  print(seurat_obj_finalQC_list[[sample_name]] %>% ncol())
   print(" ")
 }
 

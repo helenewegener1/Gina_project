@@ -1,4 +1,4 @@
-setwd("~/ciir/people/helweg/projects/Gina_project/")
+# setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 library(SeuratObject)
 library(Seurat)
@@ -17,6 +17,8 @@ seurat_obj_roughQC_list <- list()
 
 # Check samples
 names(seurat_obj_list)
+
+# HH117-SI-MILF-INF-HLADR-AND-CD19 looks different than the others
 
 ################################### Rough QC ################################### 
 
@@ -45,7 +47,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -89,7 +91,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -133,7 +135,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 2000 & nFeature_RNA < 8000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -177,7 +179,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -221,7 +223,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -265,7 +267,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -309,7 +311,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -353,7 +355,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -397,7 +399,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -441,7 +443,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -485,7 +487,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -529,7 +531,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -573,7 +575,7 @@ FeatureScatter(seurat_obj, feature1 = "nCount_RNA", feature2 = "nFeature_RNA")
 VlnPlot(seurat_obj, features = "percent.hb", layer = "counts")
 
 # Filter cells based on QC plots
-filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 6)
+filtering_expr <- expr(nFeature_RNA > 1500 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 
 n_cells_filtered <- ncol(seurat_obj_filtered)
@@ -594,7 +596,7 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 ########################################## Export list of filtered Seurat objects ##########################################
 
 names(seurat_obj_roughQC_list)
-saveRDS(seurat_obj_roughQC_list, "02_roughQC/out/seurat_obj_roughQC_list.rds")
+saveRDS(seurat_obj_roughQC_list, "07_seurat_roughQC/out/seurat_obj_roughQC_list.rds")
 
 
 
