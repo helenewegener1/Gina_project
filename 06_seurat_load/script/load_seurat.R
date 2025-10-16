@@ -57,7 +57,6 @@ for (sample in samples){
     # Find variable features in the ADT assay (optional but good practice)
     seurat_obj <- HTODemux(seurat_obj, assay = "ADT", positive.quantile = 0.99)
     
-    
     ################### If only gene expression data is available ################### 
   } else { 
     
@@ -104,6 +103,9 @@ for (sample in samples){
                   values_from = colnames(tcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
       column_to_rownames("barcode")
     
+    # Add prefix to column names as bcr data has the same colnames
+    colnames(tcr_meta_clean) <- paste0("tcr_", colnames(tcr_meta_clean))
+    
     # Add TCR data to seurat object
     seurat_obj <- AddMetaData(
       seurat_obj,
@@ -125,6 +127,8 @@ for (sample in samples){
                   values_from = colnames(bcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
       column_to_rownames("barcode")
     
+    # Add prefix to column names as tcr data has the same colnames
+    colnames(bcr_meta_clean) <- paste0("bcr_", colnames(bcr_meta_clean))
     
     # Add BCR data to seurat object
     seurat_obj <- AddMetaData(
@@ -149,7 +153,5 @@ for (sample in samples){
 ######################## Export list of seurat objects ######################### 
 
 saveRDS(seurat_obj_list, "06_seurat_load/out/seurat_obj_list.rds")
-
-
 
 
