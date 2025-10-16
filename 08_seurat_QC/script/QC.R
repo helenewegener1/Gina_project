@@ -15,10 +15,30 @@ library(glmGamPoi)
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # raw = prefiltering 
 seurat_obj_roughQC_list <- readRDS("07_seurat_roughQC/out/seurat_obj_roughQC_list.rds")
 
+############################# Sanity check for ADT #############################
+
+for (sample_name in names(seurat_obj_roughQC_list)){
+  
+  seurat_obj_raw <- seurat_obj_roughQC_list[[sample_name]]
+  
+  if ("ADT" %in% names(seurat_obj_raw)){
+    
+    Idents(seurat_obj_raw)
+    Idents(seurat_obj_raw) <- "ADT_maxID"
+    RidgePlot(seurat_obj_raw, assay = "ADT", features = rownames(seurat_obj_raw[["ADT"]]))
+    ggsave(glue("08_seurat_QC/plot/RidgePlot_{sample_name}.pdf"), width = 16, height = 20)
+    
+  }
+  
+}
+
+################################################################################
+
 # Investigate need for removal of empty droplets 
 # https://bioconductor.org/packages/release/bioc/vignettes/DropletUtils/inst/doc/DropletUtils.html
 for (sample_name in names(seurat_obj_list)){
   
+  ######################## CHECK EMPTY DROPLETS IN RAW #########################
   seurat_obj_raw <- seurat_obj_list[[sample_name]]
   
   # Get count matrix
@@ -27,7 +47,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/empty_droplets_plot_raw_{sample_name}.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/{sample_name}_empty_droplets_plot_raw.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} raw (prefilter) Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -40,6 +60,7 @@ for (sample_name in names(seurat_obj_list)){
   
   dev.off()
   
+  ################### CHECK EMPTY DROPLETS IN ROUGH FILTERED ###################
   seurat_obj_roughQC <- seurat_obj_roughQC_list[[sample_name]]
   
   # Get count matrix
@@ -48,7 +69,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/empty_droplets_plot_roughQC_{sample_name}.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/{sample_name}_empty_droplets_plot_roughQC.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} roughQC-filtered Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -154,9 +175,11 @@ for (sample_name in names(seurat_obj_roughQC_list)){
   print(" ")
 }
 
-########################################## Export list of filtered Seurat objects ##########################################
+#################### Export list of filtered Seurat objects #################### 
 
 saveRDS(seurat_obj_finalQC_list, "08_seurat_QC/out/seurat_obj_finalQC_list.rds")
+
+
 
 
 

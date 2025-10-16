@@ -9,7 +9,7 @@ library(patchwork)
 library(readxl)
 
 # Load data
-seurat_obj_roughQC_list <- readRDS("07_seurat_roughQC/out/seurat_obj_roughQC_list.rds")
+seurat_obj_roughQC_list <- readRDS("08_seurat_QC/out/seurat_obj_finalQC_list.rds")
 
 # Load Gina annotation file 
 broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "Very broad level")
