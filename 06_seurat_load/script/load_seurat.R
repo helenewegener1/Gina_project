@@ -103,6 +103,14 @@ for (sample in samples){
                   values_from = colnames(tcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
       column_to_rownames("barcode")
     
+    # Mutate all "" to NA
+    tcr_meta_clean[tcr_meta_clean == ""] <- NA
+    
+    # # Filter on UMI if 2*TRB?
+    # tcr_meta_clean %>% select(chain_contig_1, chain_contig_2, umis_contig_1, umis_contig_2) %>% 
+    #   mutate(same = ifelse(chain_contig_1 == chain_contig_2, TRUE, FALSE)) %>% 
+    #   filter(same == TRUE)
+    
     # Add prefix to column names as bcr data has the same colnames
     colnames(tcr_meta_clean) <- paste0("tcr_", colnames(tcr_meta_clean))
     
@@ -126,6 +134,9 @@ for (sample in samples){
                   names_from = contig_id, 
                   values_from = colnames(bcr_meta)[-c(index_barcode, index_contig_id)]) %>% 
       column_to_rownames("barcode")
+    
+    # Mutate all "" to NA
+    bcr_meta_clean[bcr_meta_clean == ""] <- NA
     
     # Add prefix to column names as tcr data has the same colnames
     colnames(bcr_meta_clean) <- paste0("bcr_", colnames(bcr_meta_clean))

@@ -20,6 +20,7 @@ names(seurat_obj_list)
 
 # HH117-SI-MILF-INF-HLADR-AND-CD19 looks different than the others
 
+
 ################################### Rough QC ################################### 
 
 sample_name <- names(seurat_obj_list)[[1]]

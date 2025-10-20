@@ -10,6 +10,8 @@ library(ggplot2)
 library(DropletUtils)
 library(DoubletFinder)
 library(glmGamPoi)
+# devtools::install_github("constantAmateur/SoupX", ref='devel')
+library(SoupX)
 
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # raw = prefiltering 
@@ -38,7 +40,7 @@ for (sample_name in names(seurat_obj_roughQC_list)){
 # https://bioconductor.org/packages/release/bioc/vignettes/DropletUtils/inst/doc/DropletUtils.html
 for (sample_name in names(seurat_obj_list)){
   
-  ######################## CHECK EMPTY DROPLETS IN RAW #########################
+  ######################## CHECK EMPTY DROPLETS IN PRE-ROUGH-WQ #########################
   seurat_obj_raw <- seurat_obj_list[[sample_name]]
   
   # Get count matrix
@@ -86,7 +88,7 @@ for (sample_name in names(seurat_obj_list)){
 
 rm(seurat_obj_list)
 
-################################ Doublet finder ################################ 
+################################ DoubletFinder ################################ 
 
 # Initialize final QC list 
 seurat_obj_finalQC_list <- list()
@@ -159,9 +161,10 @@ for (sample_name in names(seurat_obj_roughQC_list)){
   table(seurat_obj_roughQC@meta.data[DF.classification])
   
   # Subset the Seurat object to include only "Singlet" cells
-  seurat_obj_finalQC <- seurat_obj_roughQC[, seurat_obj_roughQC@meta.data[[DF.classification]] == "Singlet"]
+  # seurat_obj_finalQC <- seurat_obj_roughQC[, seurat_obj_roughQC@meta.data[[DF.classification]] == "Singlet"]
+  # seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
   
-  seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
+  seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_roughQC
   
 }
 
@@ -170,10 +173,60 @@ for (sample_name in names(seurat_obj_roughQC_list)){
 
 for (sample_name in names(seurat_obj_roughQC_list)){
   print(sample_name)
-  print(seurat_obj_roughQC_list[[sample_name]] %>% ncol()) 
-  print(seurat_obj_finalQC_list[[sample_name]] %>% ncol())
+  print(seurat_obj_finalQC_list[[sample_name]][[]]$DF.classification %>% table())
   print(" ")
 }
+
+############################ Ambiant RNA with SoupX ############################
+# library(multtest)
+# # I get the same rho for all cells... 
+# sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+# 
+# raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+# cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+# 
+# sc <- SoupChannel(raw_counts$`Gene Expression`, cell_counts$`Gene Expression`, calcSoupProfile = FALSE)
+# sc <-  estimateSoup(sc)
+# seurat_temp <- CreateSeuratObject(counts = sc$toc)
+# 
+# # Perform quick clustering steps
+# seurat_temp <- NormalizeData(seurat_temp, verbose = FALSE)
+# seurat_temp <- FindVariableFeatures(seurat_temp, verbose = FALSE)
+# seurat_temp <- ScaleData(seurat_temp, verbose = FALSE)
+# seurat_temp <- RunPCA(seurat_temp, npcs = 20, verbose = FALSE)
+# seurat_temp <- FindNeighbors(seurat_temp, dims = 1:20, verbose = FALSE)
+# seurat_temp <- FindClusters(seurat_temp, resolution = 0.7, verbose = FALSE)
+# seurat_temp <- RunUMAP(seurat_temp, dims = 1:20)
+# 
+# FeaturePlot(seurat_temp, features = "MKI67") 
+# DimPlot(seurat_temp, group.by = "seurat_clusters")
+# 
+# # Extract and set the clusters
+# clusters <- seurat_temp@meta.data$seurat_clusters
+# sc <- setClusters(sc, clusters)
+# sc <- autoEstCont(sc)
+# out <- adjustCounts(sc)
+# 
+# # Use the 'out' matrix to create a Seurat object
+# final_seurat_obj <- CreateSeuratObject(counts = out, project = "SoupX_Corrected_scRNA")
+# # Add the per-cell rho to the final Seurat object
+# final_seurat_obj$soupX_rho_per_cell <- sc$metaData$rho
+# 
+# # Visualize the contamination fraction across your UMAP
+# final_seurat_obj <- NormalizeData(final_seurat_obj, verbose = FALSE)
+# final_seurat_obj <- FindVariableFeatures(final_seurat_obj, verbose = FALSE)
+# final_seurat_obj <- ScaleData(final_seurat_obj, verbose = FALSE)
+# final_seurat_obj <- RunPCA(final_seurat_obj, npcs = 20, verbose = FALSE)
+# final_seurat_obj <- FindNeighbors(final_seurat_obj, dims = 1:20, verbose = FALSE)
+# final_seurat_obj <- FindClusters(final_seurat_obj, resolution = 0.5, verbose = FALSE)
+# final_seurat_obj <- RunUMAP(final_seurat_obj, dims = 1:20)
+# 
+# FeaturePlot(final_seurat_obj, reduction = "umap", features = "soupX_rho_per_cell") 
+# 
+# FeaturePlot(final_seurat_obj, features = "MKI67") 
+
+
+
 
 #################### Export list of filtered Seurat objects #################### 
 
