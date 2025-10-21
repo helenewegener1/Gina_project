@@ -39,7 +39,12 @@ for (sample_name in names(seurat_obj_list)){
 
 # Investigate need for removal of empty droplets 
 # https://bioconductor.org/packages/release/bioc/vignettes/DropletUtils/inst/doc/DropletUtils.html
+print("---------------------------------------------------------------")
+print("Investigate need for removal of empty droplets")
 for (sample_name in names(seurat_obj_list)){
+  
+  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  print(sample_name)
   
   ######################## CHECK EMPTY DROPLETS IN RAW #########################
   
@@ -134,14 +139,18 @@ for (sample_name in names(seurat_obj_list)){
 
 }
 
-rm(seurat_obj_list)
-
 ################################ DoubletFinder on cellranger filtered ################################ 
 
 # Initialize final QC list 
 seurat_obj_DoubletFinder <- list()
 
+print("---------------------------------------------------------------")
+print("DoubletFinder")
+
 for (sample_name in names(seurat_obj_list)){
+  
+  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  print(sample_name)
   
   # Define sample
   seurat_obj <- seurat_obj_list[[sample_name]]
