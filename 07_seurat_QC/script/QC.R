@@ -16,20 +16,19 @@ library(SoupX)
 
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # raw = prefiltering 
-seurat_obj_roughQC_list <- readRDS("07_seurat_roughQC/out/seurat_obj_roughQC_list.rds")
 
 ############################# Sanity check for ADT #############################
 
-for (sample_name in names(seurat_obj_roughQC_list)){
+for (sample_name in names(seurat_obj_list)){
   
-  seurat_obj_raw <- seurat_obj_roughQC_list[[sample_name]]
+  seurat_obj_raw <- seurat_obj_list[[sample_name]]
   
   if ("ADT" %in% names(seurat_obj_raw)){
     
     Idents(seurat_obj_raw)
     Idents(seurat_obj_raw) <- "ADT_maxID"
     RidgePlot(seurat_obj_raw, assay = "ADT", features = rownames(seurat_obj_raw[["ADT"]]))
-    ggsave(glue("08_seurat_QC/plot/RidgePlot_{sample_name}.pdf"), width = 16, height = 20)
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}.pdf"), width = 16, height = 20)
     
   }
   
@@ -41,54 +40,31 @@ for (sample_name in names(seurat_obj_roughQC_list)){
 # https://bioconductor.org/packages/release/bioc/vignettes/DropletUtils/inst/doc/DropletUtils.html
 for (sample_name in names(seurat_obj_list)){
   
-  ######################## CHECK EMPTY DROPLETS IN PRE-ROUGH-WQ #########################
-  seurat_obj_raw <- seurat_obj_list[[sample_name]]
+  ######################## CHECK EMPTY DROPLETS IN RAW #########################
   
-  # Get count matrix
-  count_mat <- seurat_obj_raw@assays$RNA@layers$counts
+  # Load raw (totally non-filtered) counts from cellranger 
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  seurat_obj_raw <- CreateSeuratObject(counts = raw_counts)
   
-  br.out <- barcodeRanks(count_mat)
+  # Transform to SingleCellExperiment object
+  sc_exp_raw <- as.SingleCellExperiment(seurat_obj_raw)
   
-  # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/empty_droplets_{sample_name}_raw.pdf"), width = 8, height = 6)
-  
-  plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} raw (prefilter) Barcode Rank Plot"))
-  o <- order(br.out$rank)
-  lines(br.out$rank[o], br.out$fitted[o], col="red")
-  
-  abline(h=metadata(br.out)$knee, col="dodgerblue", lty=2)
-  abline(h=metadata(br.out)$inflection, col="forestgreen", lty=2)
-  legend("bottomleft", lty=2, col=c("dodgerblue", "forestgreen"), 
-         legend=c("knee", "inflection"))
-  
-  dev.off()
-  
-  # Testing for empty droplets
+  # Run emptyDrops
   set.seed(100)
-  
-  # raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-  
-  
-  sc_exp_raw <- seurat_obj_raw %>% as.SingleCellExperiment()
-  counts(sc_exp_raw)
-  
-  e.out <- emptyDrops(counts(sc_exp_raw), lower=100)
+  e.out <- emptyDrops(counts(sc_exp_raw))
   
   # See ?emptyDrops for an explanation of why there are NA values.
-  summary(e.out$FDR <= 0.001)
+  is.cell <- table(e.out$FDR <= 0.01, useNA = "ifany")
   
-  ################### CHECK EMPTY DROPLETS IN ROUGH FILTERED ###################
-  seurat_obj_roughQC <- seurat_obj_roughQC_list[[sample_name]]
-  
-  # Get count matrix
-  count_mat <- seurat_obj_roughQC@assays$RNA@layers$counts
-  
-  br.out <- barcodeRanks(count_mat)
+  # Computing barcode ranks
+  br.out <- barcodeRanks(counts(sc_exp_raw))
   
   # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/empty_droplets_{sample_name}_roughQC.pdf"), width = 8, height = 6)
+  pdf(glue("07_seurat_QC/plot/emptyDrops/emptyDrops_{sample_name}_raw.pdf"), width = 8, height = 6)
   
-  plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} roughQC-filtered Barcode Rank Plot"))
+  plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", 
+       main=glue("{sample_name} raw (prefilter) Barcode Rank Plot"), 
+       sub = glue("Cells: {is.cell[['TRUE']]}, Not cells: {is.cell[['FALSE']]}, NAs: {is.cell[[3]]}"))
   o <- order(br.out$rank)
   lines(br.out$rank[o], br.out$fitted[o], col="red")
   
@@ -99,11 +75,60 @@ for (sample_name in names(seurat_obj_list)){
   
   dev.off()
   
+  ############################ Ambiant RNA with SoupX ############################
+  # library(multtest)
+  # # I get the same rho for all cells... 
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  # 
+  # raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  # cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+  # 
+  # sc <- SoupChannel(raw_counts$`Gene Expression`, cell_counts$`Gene Expression`, calcSoupProfile = FALSE)
+  # sc <-  estimateSoup(sc)
+  # seurat_temp <- CreateSeuratObject(counts = sc$toc)
+  # 
+  # # Perform quick clustering steps
+  # seurat_temp <- NormalizeData(seurat_temp, verbose = FALSE)
+  # seurat_temp <- FindVariableFeatures(seurat_temp, verbose = FALSE)
+  # seurat_temp <- ScaleData(seurat_temp, verbose = FALSE)
+  # seurat_temp <- RunPCA(seurat_temp, npcs = 20, verbose = FALSE)
+  # seurat_temp <- FindNeighbors(seurat_temp, dims = 1:20, verbose = FALSE)
+  # seurat_temp <- FindClusters(seurat_temp, resolution = 0.7, verbose = FALSE)
+  # seurat_temp <- RunUMAP(seurat_temp, dims = 1:20)
+  # 
+  # FeaturePlot(seurat_temp, features = "MKI67") 
+  # DimPlot(seurat_temp, group.by = "seurat_clusters")
+  # 
+  # # Extract and set the clusters
+  # clusters <- seurat_temp@meta.data$seurat_clusters
+  # sc <- setClusters(sc, clusters)
+  # sc <- autoEstCont(sc)
+  # out <- adjustCounts(sc)
+  # 
+  # # Use the 'out' matrix to create a Seurat object
+  # final_seurat_obj <- CreateSeuratObject(counts = out, project = "SoupX_Corrected_scRNA")
+  # # Add the per-cell rho to the final Seurat object
+  # final_seurat_obj$soupX_rho_per_cell <- sc$metaData$rho
+  # 
+  # # Visualize the contamination fraction across your UMAP
+  # final_seurat_obj <- NormalizeData(final_seurat_obj, verbose = FALSE)
+  # final_seurat_obj <- FindVariableFeatures(final_seurat_obj, verbose = FALSE)
+  # final_seurat_obj <- ScaleData(final_seurat_obj, verbose = FALSE)
+  # final_seurat_obj <- RunPCA(final_seurat_obj, npcs = 20, verbose = FALSE)
+  # final_seurat_obj <- FindNeighbors(final_seurat_obj, dims = 1:20, verbose = FALSE)
+  # final_seurat_obj <- FindClusters(final_seurat_obj, resolution = 0.5, verbose = FALSE)
+  # final_seurat_obj <- RunUMAP(final_seurat_obj, dims = 1:20)
+  # 
+  # FeaturePlot(final_seurat_obj, reduction = "umap", features = "soupX_rho_per_cell") 
+  # 
+  # FeaturePlot(final_seurat_obj, features = "MKI67") 
+  
+
 }
 
 rm(seurat_obj_list)
 
-################################ DoubletFinder ################################ 
+################################ DoubletFinder on filtered ################################ 
 
 # Initialize final QC list 
 seurat_obj_finalQC_list <- list()
@@ -192,60 +217,13 @@ for (sample_name in names(seurat_obj_roughQC_list)){
   print(" ")
 }
 
-############################ Ambiant RNA with SoupX ############################
-# library(multtest)
-# # I get the same rho for all cells... 
-# sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-# 
-# raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-# cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
-# 
-# sc <- SoupChannel(raw_counts$`Gene Expression`, cell_counts$`Gene Expression`, calcSoupProfile = FALSE)
-# sc <-  estimateSoup(sc)
-# seurat_temp <- CreateSeuratObject(counts = sc$toc)
-# 
-# # Perform quick clustering steps
-# seurat_temp <- NormalizeData(seurat_temp, verbose = FALSE)
-# seurat_temp <- FindVariableFeatures(seurat_temp, verbose = FALSE)
-# seurat_temp <- ScaleData(seurat_temp, verbose = FALSE)
-# seurat_temp <- RunPCA(seurat_temp, npcs = 20, verbose = FALSE)
-# seurat_temp <- FindNeighbors(seurat_temp, dims = 1:20, verbose = FALSE)
-# seurat_temp <- FindClusters(seurat_temp, resolution = 0.7, verbose = FALSE)
-# seurat_temp <- RunUMAP(seurat_temp, dims = 1:20)
-# 
-# FeaturePlot(seurat_temp, features = "MKI67") 
-# DimPlot(seurat_temp, group.by = "seurat_clusters")
-# 
-# # Extract and set the clusters
-# clusters <- seurat_temp@meta.data$seurat_clusters
-# sc <- setClusters(sc, clusters)
-# sc <- autoEstCont(sc)
-# out <- adjustCounts(sc)
-# 
-# # Use the 'out' matrix to create a Seurat object
-# final_seurat_obj <- CreateSeuratObject(counts = out, project = "SoupX_Corrected_scRNA")
-# # Add the per-cell rho to the final Seurat object
-# final_seurat_obj$soupX_rho_per_cell <- sc$metaData$rho
-# 
-# # Visualize the contamination fraction across your UMAP
-# final_seurat_obj <- NormalizeData(final_seurat_obj, verbose = FALSE)
-# final_seurat_obj <- FindVariableFeatures(final_seurat_obj, verbose = FALSE)
-# final_seurat_obj <- ScaleData(final_seurat_obj, verbose = FALSE)
-# final_seurat_obj <- RunPCA(final_seurat_obj, npcs = 20, verbose = FALSE)
-# final_seurat_obj <- FindNeighbors(final_seurat_obj, dims = 1:20, verbose = FALSE)
-# final_seurat_obj <- FindClusters(final_seurat_obj, resolution = 0.5, verbose = FALSE)
-# final_seurat_obj <- RunUMAP(final_seurat_obj, dims = 1:20)
-# 
-# FeaturePlot(final_seurat_obj, reduction = "umap", features = "soupX_rho_per_cell") 
-# 
-# FeaturePlot(final_seurat_obj, features = "MKI67") 
 
 
 
 
-#################### Export list of filtered Seurat objects #################### 
+#################### Export list of Seurat objects with QC metrices in metadata #################### 
 
-saveRDS(seurat_obj_finalQC_list, "08_seurat_QC/out/seurat_obj_finalQC_list.rds")
+# saveRDS(seurat_obj, "07_seurat_QC/out/seurat_obj_QC_metr.rds")
 
 
 

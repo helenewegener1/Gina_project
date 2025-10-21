@@ -11,8 +11,8 @@
 !/05_run_cellranger/out/res_*/outs/per_sample_outs/res_*/web_summary.html
 05_run_cellranger/out_test/
 06_seurat_load/out/
-07_seurat_roughQC/out/
-08_seurat_QC/out/
+07_seurat_QC/out/
+08_seurat_QC_filtering/out/
 
 Gina_project.Rproj
 .Rproj.user
