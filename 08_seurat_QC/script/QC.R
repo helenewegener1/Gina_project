@@ -3,6 +3,7 @@
 # Load libraries 
 library(SeuratObject)
 library(Seurat)
+library(SingleCellExperiment)
 library(dplyr)
 library(stringr)
 library(glue)
@@ -49,7 +50,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/{sample_name}_empty_droplets_plot_raw.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/empty_droplets_{sample_name}_raw.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} raw (prefilter) Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -62,6 +63,20 @@ for (sample_name in names(seurat_obj_list)){
   
   dev.off()
   
+  # Testing for empty droplets
+  set.seed(100)
+  
+  # raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  
+  
+  sc_exp_raw <- seurat_obj_raw %>% as.SingleCellExperiment()
+  counts(sc_exp_raw)
+  
+  e.out <- emptyDrops(counts(sc_exp_raw), lower=100)
+  
+  # See ?emptyDrops for an explanation of why there are NA values.
+  summary(e.out$FDR <= 0.001)
+  
   ################### CHECK EMPTY DROPLETS IN ROUGH FILTERED ###################
   seurat_obj_roughQC <- seurat_obj_roughQC_list[[sample_name]]
   
@@ -71,7 +86,7 @@ for (sample_name in names(seurat_obj_list)){
   br.out <- barcodeRanks(count_mat)
   
   # Making Barcode Rank Plot.
-  pdf(glue("08_seurat_QC/plot/{sample_name}_empty_droplets_plot_roughQC.pdf"), width = 8, height = 6)
+  pdf(glue("08_seurat_QC/plot/empty_droplets_{sample_name}_roughQC.pdf"), width = 8, height = 6)
   
   plot(br.out$rank, br.out$total, log="xy", xlab="Rank", ylab="Total", main=glue("{sample_name} roughQC-filtered Barcode Rank Plot"))
   o <- order(br.out$rank)
@@ -160,7 +175,7 @@ for (sample_name in names(seurat_obj_roughQC_list)){
   #number of singlet and doublet
   table(seurat_obj_roughQC@meta.data[DF.classification])
   
-  # Subset the Seurat object to include only "Singlet" cells
+  # We do not do this here, but maybe later if it makes sense: Subset the Seurat object to include only "Singlet" cells
   # seurat_obj_finalQC <- seurat_obj_roughQC[, seurat_obj_roughQC@meta.data[[DF.classification]] == "Singlet"]
   # seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
   
