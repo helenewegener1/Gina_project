@@ -1,4 +1,4 @@
-# setwd("~/ciir/people/helweg/projects/Gina_project/")
+setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -53,8 +53,12 @@ for (sample_name in names(seurat_obj_list)){
   seurat_obj_raw <- CreateSeuratObject(counts = raw_counts)
   
   # Transform to SingleCellExperiment object
-  sc_exp_raw <- as.SingleCellExperiment(seurat_obj_raw)
-  
+  if (length(Layers(seurat_obj_raw))){
+    sc_exp_raw <- seurat_obj_raw %>% JoinLayers() %>% as.SingleCellExperiment()
+  } else {
+    sc_exp_raw <- as.SingleCellExperiment(seurat_obj_raw)
+  }
+
   # Run emptyDrops
   set.seed(100)
   e.out <- emptyDrops(counts(sc_exp_raw))
