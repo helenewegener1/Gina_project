@@ -9,7 +9,8 @@ library(patchwork)
 library(readxl)
 
 # Load data
-seurat_obj_roughQC_list <- readRDS("08_seurat_QC/out/seurat_obj_finalQC_list.rds")
+seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
+
 
 # Load Gina annotation file 
 broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "Very broad level")
@@ -29,7 +30,7 @@ names(detailed_markers) <- c("TFH_cell", "Naive_B_cell", "Memory_B_cell", "GC_B_
 # grep("IGHA", rownames(seurat_obj), value = TRUE, ignore.case = TRUE)
 
 # Load sample to get genes that are in the data.  
-seurat_obj <- seurat_obj_roughQC_list[[1]]
+seurat_obj <- seurat_obj_QC_filtered_list[[1]]
 
 source("09_annotation_pre_integration/script/functions.R")
 
@@ -40,11 +41,11 @@ broad_markers <- update_marker_names(broad_markers, seurat_obj)
 detailed_markers <- update_marker_names(detailed_markers, seurat_obj)
 
 # Make FeaturePlots with the marker genes for each sample
-for (sample_name in names(seurat_obj_roughQC_list)){
+for (sample_name in names(seurat_obj_QC_filtered_list)){
   
   # Define specific seurat object 
-  seurat_obj <- seurat_obj_roughQC_list[[sample_name]]
-  # seurat_obj <- seurat_obj_roughQC_list$`HH119-COLP-PC`
+  seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
+  # seurat_obj <- seurat_obj_QC_filtered_list$`HH119-COLP-PC`
   
   # Create directory for plots of specific sample
   out_dir <- glue("09_annotation_pre_integration/plot/{sample_name}")

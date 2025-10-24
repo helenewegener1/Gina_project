@@ -16,7 +16,7 @@ plot_qc <- function(seurat_obj, sample_name, n_cells, version = "raw", filtering
   }
   
   ggsave(plot = p_final,
-         filename = glue("07_seurat_roughQC/plot/{sample_name}_{version}_QC_plot.png"), 
+         filename = glue("08_seurat_QC_filtering/plot/{sample_name}_{version}_QC_plot.png"), 
          width = 9, 
          height = 8)
   
