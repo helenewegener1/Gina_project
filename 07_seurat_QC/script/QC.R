@@ -1,4 +1,4 @@
-setwd("~/ciir/people/helweg/projects/Gina_project/")
+# setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -14,6 +14,8 @@ library(glmGamPoi)
 # devtools::install_github("constantAmateur/SoupX", ref='devel')
 library(SoupX)
 library(multtest)
+library(scDblFinder)
+library(decontX)
 
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellranger filtered
@@ -143,6 +145,31 @@ for (sample_name in names(seurat_obj_list)){
 
 }
 
+############################ Ambiant RNA with decontX ############################
+
+# Initialize  QC list 
+seurat_obj_decontX <- list()
+
+for (sample_name in names(seurat_obj_list)){
+  
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+  
+  if (is.null(names(raw_counts))){
+    
+    sce <- decontX(cell_counts, background = raw_counts)
+    
+  } else if (length(names(raw_counts)) > 1) {
+    
+    sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
+    
+  }
+
+  
+}
+
+
+
 ################################ DoubletFinder on cellranger filtered ################################ 
 
 # Initialize final QC list 
@@ -237,9 +264,71 @@ for (sample_name in names(seurat_obj_list)){
 
 }
 
+################################ scDblFinder on cellranger filtered ################################ 
+
+# Initialize final QC list 
+seurat_obj_scDblFinder <- list()
+
+print("---------------------------------------------------------------")
+print("scDblFinder")
+
+for (sample_name in names(seurat_obj_list)){
+  
+  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  print(sample_name)
+  
+  # Define sample
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  # Get count matrix
+  counts <- seurat_obj@assays$RNA$counts 
+  
+  # Run scDblFinder
+  sce <- scDblFinder(counts, dbr=0.1)
+  
+  # Access doublets and make metadata
+  doublet_metadata <- data.frame(scDblFinder.class = sce$scDblFinder.class,
+                                 scDblFinder.score = sce$scDblFinder.score)
+  
+  # Add doublet analysis to metadata
+  seurat_obj <- AddMetaData(seurat_obj, doublet_metadata)
+  
+  # Number of singlet and doublet - Add to plot
+  result <- table(seurat_obj@meta.data$scDblFinder.class, useNA = "ifany")
+  
+  # Seurat workflow so I can UMAP
+  seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+  seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+  seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  #Doublet detection
+  seurat_obj <- RunPCA(seurat_obj)
+  ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
+  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20)
+  seurat_obj <- FindClusters(seurat_obj, resolution = 0.5)
+  seurat_obj <- RunUMAP(seurat_obj, dims = 1:20)
+  DimPlot(seurat_obj)
+  
+  # Plot
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.class") + 
+    labs(title = "scDblFinder", subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"))
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/scDblFinder_{sample_name}.pdf"), width = 7, height = 6)
+  
+  FeaturePlot(seurat_obj, reduction = 'umap', features = "MKI67") + 
+    labs(title = "MKI67", subtitle = "MKI67 is a proliferation marker")
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/MKI67_{sample_name}.pdf"), width = 7, height = 6)
+  
+  # We do not do this here, but maybe later if it makes sense: Subset the Seurat object to include only "Singlet" cells
+  # seurat_obj_finalQC <- seurat_obj[, seurat_obj@meta.data[[DF.classification]] == "Singlet"]
+  # seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
+  
+  seurat_obj_scDblFinder[[sample_name]] <- seurat_obj
+  
+}
+
 #################### Export list of Seurat objects with QC metrices in metadata #################### 
 
-saveRDS(seurat_obj_DoubletFinder, "07_seurat_QC/out/seurat_obj_QC_metrics.rds")
+saveRDS(seurat_obj_scDblFinder, "07_seurat_QC/out/seurat_obj_QC_metrics.rds")
 
 
 

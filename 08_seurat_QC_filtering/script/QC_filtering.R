@@ -10,7 +10,6 @@ library(patchwork)
 source("08_seurat_QC_filtering/script/functions.R")
 
 # Load data
-# seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds")
 seurat_obj_list <- readRDS("07_seurat_QC/out/seurat_obj_QC_metrics.rds")
 
 # Initialize filtered list
@@ -22,7 +21,7 @@ names(seurat_obj_list)
 # HH117-SI-MILF-INF-HLADR-AND-CD19 looks different than the others
 
 # Doublets out object 
-doublet_nFeature_test <- list()
+# doublet_nFeature_test <- list()
 
 ################################### Rough QC ################################### 
 
@@ -30,13 +29,16 @@ sample_name <- names(seurat_obj_list)[[1]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+n_cells_raw <- ncol(seurat_obj) 
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # GINA: WHAT DO YOU WANT TO FILTER ON?
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
 seurat_obj[["percent.hb"]] <- PercentageFeatureSet(seurat_obj, pattern = "^HBA|^HBB")
-
-n_cells_raw <- ncol(seurat_obj) 
 
 # Plot QC metrics in violin plots
 plot_qc(seurat_obj = seurat_obj, 
@@ -57,7 +59,7 @@ seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
 n_cells_filtered <- ncol(seurat_obj_filtered)
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$DF.classifications, seurat_obj[[]]$nFeature_RNA > 6000)
+# doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
 
 # Plot QC metrics in violin plots after filtering
 plot_qc(seurat_obj = seurat_obj_filtered, 
@@ -77,6 +79,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[2]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
@@ -125,6 +130,9 @@ sample_name <- names(seurat_obj_list)[[3]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -171,6 +179,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[4]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
@@ -219,6 +230,9 @@ sample_name <- names(seurat_obj_list)[[5]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -265,6 +279,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[6]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
@@ -313,6 +330,9 @@ sample_name <- names(seurat_obj_list)[[7]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -359,6 +379,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[8]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
@@ -407,6 +430,9 @@ sample_name <- names(seurat_obj_list)[[9]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -453,6 +479,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[10]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
@@ -501,6 +530,9 @@ sample_name <- names(seurat_obj_list)[[11]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -548,6 +580,9 @@ sample_name <- names(seurat_obj_list)[[12]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
 
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
 seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
@@ -594,6 +629,9 @@ rm(seurat_obj, seurat_obj_filtered, n_cells_raw, n_cells_filtered)
 sample_name <- names(seurat_obj_list)[[13]]
 
 seurat_obj <- seurat_obj_list[[sample_name]]
+
+# Filter on QC metrics from 07
+seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
 
 # Calculate QC metrics
 seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
