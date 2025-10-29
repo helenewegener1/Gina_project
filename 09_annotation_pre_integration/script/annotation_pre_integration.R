@@ -7,6 +7,7 @@ library(glue)
 library(ggplot2)
 library(patchwork)
 library(readxl)
+library(purrr)
 
 # Load data
 seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
@@ -45,7 +46,6 @@ for (sample_name in names(seurat_obj_QC_filtered_list)){
   
   # Define specific seurat object 
   seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
-  # seurat_obj <- seurat_obj_QC_filtered_list$`HH119-COLP-PC`
   
   # Create directory for plots of specific sample
   out_dir <- glue("09_annotation_pre_integration/plot/{sample_name}")
