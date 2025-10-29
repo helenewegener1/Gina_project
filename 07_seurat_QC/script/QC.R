@@ -152,6 +152,8 @@ seurat_obj_decontX <- list()
 
 for (sample_name in names(seurat_obj_list)){
   
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  
   raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
   cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
   
@@ -164,8 +166,18 @@ for (sample_name in names(seurat_obj_list)){
     sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
     
   }
-
   
+  # Get seurat object 
+  seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  # Add decontX to contamination "score" to metadata 
+  seurat_obj <- AddMetaData(seurat_obj, sce$contamination, "sce_contamination") 
+  
+  seurat_obj@meta.data$sce_contamination
+  
+  # Export 
+  seurat_obj_decontX[[sample_name]] <- seurat_obj
+
 }
 
 
