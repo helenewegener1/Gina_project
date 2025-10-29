@@ -66,10 +66,45 @@ for (sample_name in names(bcr_seurat_obj_list)){
 
 ################################# scRepertorie ################################# 
 
-sample_name <- names(tcr_seurat_obj_list)[[1]]
+sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+seurat_obj <- seurat_obj_list[[sample_name]]
 
-contigs <- read.csv(glue("05_run_cellranger/out/res_HH117-SI-MILF-INF-HLADR-AND-CD19/outs/per_sample_outs/res_HH117-SI-MILF-INF-HLADR-AND-CD19/web_summary.html//filtered_contig_annotations.csv"))
+t_contigs <- read.csv(glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/vdj_t/filtered_contig_annotations.csv"))
+b_contigs <- read.csv(glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/vdj_b/filtered_contig_annotations.csv"))
 
-contig.list <- createHTOContigList(contigs, 
-                                   Seurat.Obj, 
-                                   group.by = "HTO_maxID")
+t_contig.list <- createHTOContigList(t_contigs, 
+                                     seurat_obj, 
+                                     group.by = "ADT_maxID")
+
+b_contig.list <- createHTOContigList(b_contigs, 
+                                     seurat_obj, 
+                                     # samples = ,
+                                     group.by = "ADT_maxID")
+
+# combineTCR - one line per cell
+combined.TCR <- combineTCR(t_contig.list,
+                           removeNA = FALSE, 
+                           removeMulti = FALSE, 
+                           filterMulti = FALSE)
+
+head(combined.TCR[[1]])
+colnames(combined.TCR[[1]])
+
+# combineBCR - - one line per cell
+# Combine using the default similarity clustering
+combined.BCR <- combineBCR(b_contig.list, 
+                           samples = "Patient1", 
+                           filterNonproductive = TRUE, # default 
+                           filterMulti = TRUE # default 
+                           ) 
+
+# The CTstrict column contains cluster IDs (e.g., "cluster.1")
+head(combined.BCR.clustered[[1]][, c("barcode", "CTstrict", "IGH", "cdr3_aa1")])
+
+# Basic Clonal Visualizations
+clonalQuant(combined.TCR, 
+            cloneCall="strict", 
+            chain = "both", 
+            scale = TRUE)
+
+

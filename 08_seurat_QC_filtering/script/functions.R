@@ -1,4 +1,14 @@
 
+compute_QC_metrics <- function(seurat_obj){
+  
+  seurat_obj[["percent.mt"]] <- PercentageFeatureSet(seurat_obj, pattern = "^MT-")
+  seurat_obj[["percent.ribo"]] <- PercentageFeatureSet(seurat_obj, pattern = "^RPS|^RPL")
+  seurat_obj[["percent.hb"]] <- PercentageFeatureSet(seurat_obj, pattern = "^HBA|^HBB")
+  
+  return(seurat_obj)
+  
+}
+
 plot_qc <- function(seurat_obj, sample_name, n_cells, version = "raw", filtering = ""){
   
   p_ribo <- VlnPlot(seurat_obj, features = "percent.ribo", layer = "counts") + theme(axis.text.x = element_text(angle = 0, hjust = 0.5), legend.position = 'none')
@@ -21,5 +31,26 @@ plot_qc <- function(seurat_obj, sample_name, n_cells, version = "raw", filtering
          height = 8)
   
   return(p_final)
+  
+}
+
+pre_filter_pipeline <- function(seurat_obj){
+  
+  n_cells_raw <- ncol(seurat_obj) 
+
+  # Remove doublets 
+  seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+  
+  # Compute QC metrics
+  compute_QC_metrics(seurat_obj)
+  
+  # Plot QC metrics in violin plots
+  plot_qc(seurat_obj = seurat_obj, 
+          sample_name = sample_name, 
+          n_cells = n_cells_raw, 
+          version = "raw", 
+          filtering = "")
+  
+  return(seurat_obj)
   
 }

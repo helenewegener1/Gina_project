@@ -1,4 +1,4 @@
-# setwd("~/ciir/people/helweg/projects/Gina_project/")
+setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -20,18 +20,18 @@ library(decontX)
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellranger filtered
 
-############################# Sanity check for ADT #############################
+############################# Sanity check for ADT - pre QC #############################
 
 for (sample_name in names(seurat_obj_list)){
   
-  seurat_obj_raw <- seurat_obj_list[[sample_name]]
+  seurat_obj <- seurat_obj_list[[sample_name]]
   
-  if ("ADT" %in% names(seurat_obj_raw)){
+  if ("ADT" %in% names(seurat_obj)){
     
-    Idents(seurat_obj_raw)
-    Idents(seurat_obj_raw) <- "ADT_maxID"
-    RidgePlot(seurat_obj_raw, assay = "ADT", features = rownames(seurat_obj_raw[["ADT"]]))
-    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}.pdf"), width = 16, height = 20)
+    Idents(seurat_obj)
+    Idents(seurat_obj) <- "ADT_maxID"
+    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_preQC.pdf"), width = 16, height = 20)
     
   }
   
@@ -145,42 +145,6 @@ for (sample_name in names(seurat_obj_list)){
 # 
 # }
 
-############################ Ambiant RNA with decontX ############################
-
-# Initialize  QC list 
-seurat_obj_decontX <- list()
-
-for (sample_name in names(seurat_obj_list)){
-  
-  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-  
-  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
-  
-  if (is.null(names(raw_counts))){
-    
-    sce <- decontX(cell_counts, background = raw_counts)
-    
-  } else if (length(names(raw_counts)) > 1) {
-    
-    sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
-    
-  }
-  
-  # Get seurat object 
-  seurat_obj <- seurat_obj_list[[sample_name]]
-  
-  # Add decontX to contamination "score" to metadata 
-  seurat_obj <- AddMetaData(seurat_obj, sce$contamination, "sce_contamination") 
-  
-  seurat_obj@meta.data$sce_contamination
-  
-  # Export 
-  seurat_obj_decontX[[sample_name]] <- seurat_obj
-
-}
-
-
 
 ################################ DoubletFinder on cellranger filtered ################################ 
 
@@ -279,19 +243,42 @@ for (sample_name in names(seurat_obj_list)){
 ################################ scDblFinder on cellranger filtered ################################ 
 
 # Initialize final QC list 
-seurat_obj_scDblFinder <- list()
-
-print("---------------------------------------------------------------")
-print("scDblFinder")
+seurat_obj_QC <- list()
 
 for (sample_name in names(seurat_obj_list)){
   
-  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  
+  print("---------------------------------------------------------------")
   print(sample_name)
   
-  # Define sample
-  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  ############################ Ambiant RNA with decontX ############################
+  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  print("decontX")
+  
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+  
+  if (is.null(names(raw_counts))){
+    
+    sce <- decontX(cell_counts, background = raw_counts)
+    
+  } else if (length(names(raw_counts)) > 1) {
+    
+    sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
+    
+  }
+  
+  # Get seurat object 
   seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  # Add decontX to contamination "score" to metadata 
+  seurat_obj <- AddMetaData(seurat_obj, sce$contamination, "sce_contamination") 
+  
+  seurat_obj@meta.data$sce_contamination
+  
+  print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
+  print("scDblFinder")
   
   # Get count matrix
   counts <- seurat_obj@assays$RNA$counts 
@@ -334,15 +321,30 @@ for (sample_name in names(seurat_obj_list)){
   # seurat_obj_finalQC <- seurat_obj[, seurat_obj@meta.data[[DF.classification]] == "Singlet"]
   # seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
   
-  seurat_obj_scDblFinder[[sample_name]] <- seurat_obj
+  seurat_obj_QC[[sample_name]] <- seurat_obj
   
 }
 
 #################### Export list of Seurat objects with QC metrices in metadata #################### 
 
-saveRDS(seurat_obj_scDblFinder, "07_seurat_QC/out/seurat_obj_QC_metrics.rds")
+saveRDS(seurat_obj_QC, "07_seurat_QC/out/seurat_obj_QC.rds")
 
+############################# Sanity check for ADT - post QC #############################
 
+for (sample_name in names(seurat_obj_scDblFinder)){
+  
+  seurat_obj <- seurat_obj_scDblFinder[[sample_name]]
+  
+  if ("ADT" %in% names(seurat_obj)){
+    
+    Idents(seurat_obj)
+    Idents(seurat_obj) <- "ADT_maxID"
+    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_postQC.pdf"), width = 16, height = 20)
+    
+  }
+  
+}
 
 
 
