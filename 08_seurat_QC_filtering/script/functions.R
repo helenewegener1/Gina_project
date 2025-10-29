@@ -9,7 +9,9 @@ compute_QC_metrics <- function(seurat_obj){
   
 }
 
-plot_qc <- function(seurat_obj, sample_name, n_cells, version = "raw", filtering = ""){
+plot_qc <- function(seurat_obj, sample_name, version = "raw", filtering = ""){
+  
+  n_cells <- ncol(seurat_obj)
   
   p_ribo <- VlnPlot(seurat_obj, features = "percent.ribo", layer = "counts") + theme(axis.text.x = element_text(angle = 0, hjust = 0.5), legend.position = 'none')
   p_mt <- VlnPlot(seurat_obj, features = "percent.mt", layer = "counts") + geom_hline(yintercept = 20, color = "black") + theme(axis.text.x = element_text(angle = 0, hjust = 0.5), legend.position = 'none')
@@ -35,19 +37,16 @@ plot_qc <- function(seurat_obj, sample_name, n_cells, version = "raw", filtering
 }
 
 pre_filter_pipeline <- function(seurat_obj){
-  
-  n_cells_raw <- ncol(seurat_obj) 
 
   # Remove doublets 
   seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
   
   # Compute QC metrics
-  compute_QC_metrics(seurat_obj)
+  seurat_obj <- compute_QC_metrics(seurat_obj)
   
   # Plot QC metrics in violin plots
   plot_qc(seurat_obj = seurat_obj, 
           sample_name = sample_name, 
-          n_cells = n_cells_raw, 
           version = "raw", 
           filtering = "")
   
