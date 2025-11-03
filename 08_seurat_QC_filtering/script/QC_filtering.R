@@ -199,7 +199,6 @@ seurat_obj <- pre_filter_pipeline(seurat_obj)
 # Filter cells based on QC plots
 filtering_expr <- expr(nFeature_RNA > 400 & nFeature_RNA < 7500 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
-n_cells_filtered <- ncol(seurat_obj_filtered)
 
 # Plot QC metrics in violin plots after filtering
 plot_qc(seurat_obj = seurat_obj_filtered, sample_name = sample_name, 
@@ -225,7 +224,6 @@ seurat_obj <- pre_filter_pipeline(seurat_obj)
 # Filter cells based on QC plots
 filtering_expr <- expr(nFeature_RNA > 400 & nFeature_RNA < 6000 & percent.mt < 20)
 seurat_obj_filtered <- subset(seurat_obj, subset = !!filtering_expr)
-n_cells_filtered <- ncol(seurat_obj_filtered)
 
 # Plot QC metrics in violin plots after filtering
 plot_qc(seurat_obj = seurat_obj_filtered, sample_name = sample_name, 
