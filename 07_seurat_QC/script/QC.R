@@ -331,9 +331,11 @@ saveRDS(seurat_obj_QC, "07_seurat_QC/out/seurat_obj_QC.rds")
 
 ############################# Sanity check for ADT - post QC #############################
 
-for (sample_name in names(seurat_obj_scDblFinder)){
+# seurat_obj_QC <- readRDS("07_seurat_QC/out/seurat_obj_QC.rds")
+
+for (sample_name in names(seurat_obj_QC)){
   
-  seurat_obj <- seurat_obj_scDblFinder[[sample_name]]
+  seurat_obj <- seurat_obj_QC[[sample_name]]
   
   if ("ADT" %in% names(seurat_obj)){
     
