@@ -10,7 +10,7 @@ library(glue)
 library(ggplot2)
 library(patchwork)
 library(readxl)
-library(ztable)
+# library(ztable)
 library(pheatmap)
 
 # Load data
@@ -105,8 +105,99 @@ dev.off()
 
 Gina_seurat_obj@meta.data$Celltype %>% table()
 
+#
+HTOHeatmap(Gina_seurat_obj, assay = "ADT", ncells = 5000)
+
+
+# Investigate 
+
+df <- Gina_seurat_obj[["ADT"]]$counts %>% 
+  as.data.frame() %>% 
+  rownames_to_column("follicles") %>% 
+  pivot_longer(cols = colnames(Gina_seurat_obj), names_to = "cell", values_to = "value")
+
+df_meta_data <- Gina_seurat_obj@meta.data %>% select(ADT_classification, ADT_maxID, ADT_classification.global) %>% rownames_to_column("cell")
+
+df <- df %>% left_join(df_meta_data, by = "cell", relationship = "many-to-many")
+
+head(df)
+
+cell_doublets <- Gina_seurat_obj@meta.data %>% filter(ADT_classification.global == "Doublet") %>% rownames()
+
+cell_subset_list <- list(
+  x1 = cell_doublets[1:5],
+  x2 = cell_doublets[5:10], 
+  x3 = cell_doublets[10:15]
+)
+
+x <- "x3"
+
+df %>% 
+  filter(cell %in% cell_subset_list[[x]]) %>%
+  filter(ADT_classification.global == "Doublet") %>%
+  ggplot(aes(x = follicles, 
+             y = value,
+             color = ADT_classification)) + 
+  # geom_col(position = "dodge") + 
+  geom_point() +
+  geom_line(aes(group = cell)) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+  labs(
+    x = "", 
+    title = "5 cells where ADT_classification.global = 'Doublet'"
+  )
+
+ggsave(glue("07_seurat_QC/plot/ADT_explore/doublets_lineplot_{x}.png"), width = 12, height = 8)
+
+# log value 
+df %>% 
+  filter(cell %in% cell_subset_list[[x]]) %>%
+  filter(ADT_classification.global == "Doublet") %>%
+  ggplot(aes(x = follicles, 
+             y = log(value),
+             color = ADT_classification)) + 
+  # geom_col(position = "dodge") + 
+  geom_point() +
+  geom_line(aes(group = cell)) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+  labs(
+    x = "", 
+    title = "5 cells where ADT_classification.global = 'Doublet'"
+  )
+
+ggsave(glue("07_seurat_QC/plot/ADT_explore/doublets_lineplot_{x}_log.png"), width = 12, height = 8)
 
 
 
+# 
+DefaultAssay(Gina_seurat_obj)
+Idents(Gina_seurat_obj) <- Gina_seurat_obj@meta.data$ADT_maxID
+FeatureScatter(Gina_seurat_obj, feature1 = "Fol-1", feature2 = "Fol-2")
+FeatureScatter(Gina_seurat_obj, feature1 = "Fol-6", feature2 = "Fol-8")
+FeatureScatter(Gina_seurat_obj, feature1 = "Fol-2", feature2 = "Fol-9")
 
+# ADT QC 
+VlnPlot(Gina_seurat_obj, features = "nCount_ADT", layer = "counts")
+Gina_seurat_obj_subset <- subset(Gina_seurat_obj, subset = nCount_ADT > 100 & nCount_ADT < quantile(Gina_seurat_obj$nCount_ADT, 0.99))
 
+# N cells before and after filtering
+ncol(Gina_seurat_obj[["ADT"]])
+ncol(Gina_seurat_obj_subset[["ADT"]])
+
+Gina_seurat_obj_subset <- NormalizeData(Gina_seurat_obj_subset, assay = "ADT", normalization.method = "CLR")
+Gina_seurat_obj_subset <- HTODemux(Gina_seurat_obj_subset, assay = "ADT", positive.quantile = 0.999)
+
+Gina_seurat_obj_subset@meta.data$ADT_classification.global %>% table()
+Gina_seurat_obj_subset@meta.data$ADT_maxID %>% table()
+
+# Pre-filter 
+Gina_seurat_obj@meta.data$ADT_classification.global %>% table()
+Gina_seurat_obj@meta.data$ADT_maxID %>% table()
+
+# # MULTIseqDemux
+# Gina_seurat_obj_multi <- MULTIseqDemux(Gina_seurat_obj, assay = "ADT", quantile = 0.99)
+# 
+# Gina_seurat_obj_multi@meta.data$MULTI_classification %>% table()
+# Gina_seurat_obj_multi@meta.data$MULTI_ID %>% table()
