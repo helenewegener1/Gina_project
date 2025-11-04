@@ -1,0 +1,19 @@
+id,name,read,pattern,sequence,feature_type
+Hashtag_1_TotalSeqC,Fol_1,R2,5PNNNNNNNNNN(BC),GTCAACTCTTTAGCG,Antibody Capture
+Hashtag_2_TotalSeqC,Fol_2,R2,5PNNNNNNNNNN(BC),TGATGGCCTATTGGG,Antibody Capture
+Hashtag_3_TotalSeqC,Fol_3,R2,5PNNNNNNNNNN(BC),TTCCGCCTCTCTTTG,Antibody Capture
+Hashtag_4_TotalSeqC,Fol_4,R2,5PNNNNNNNNNN(BC),AGTAAGTTCAGCGTA,Antibody Capture
+Hashtag_5_TotalSeqC,Fol_5,R2,5PNNNNNNNNNN(BC),AAGTATCGTTTCGCA,Antibody Capture
+Hashtag_6_TotalSeqC,Fol_6,R2,5PNNNNNNNNNN(BC),GGTTGCCAGATGTCA,Antibody Capture
+Hashtag_19_TotalSeqC,Fol_7,R2,5PNNNNNNNNNN(BC),ACCCTTCCCTTCGTT,Antibody Capture
+Hashtag_8_TotalSeqC,Fol_8,R2,5PNNNNNNNNNN(BC),CTCCTCTGCAATTAC,Antibody Capture
+Hashtag_9_TotalSeqC,Fol_9,R2,5PNNNNNNNNNN(BC),CAGTAGTCACGGTCA,Antibody Capture
+Hashtag_10_TotalSeqC,Fol_10,R2,5PNNNNNNNNNN(BC),ATTGACCCGCGTTAG,Antibody Capture
+Hashtag_11_TotalSeqC,Fol_11,R2,5PNNNNNNNNNN(BC),CGATTGTAGACCTTT,Antibody Capture
+Hashtag_12_TotalSeqC,Fol_12,R2,5PNNNNNNNNNN(BC),TAACGACCAGCCATA,Antibody Capture
+Hashtag_13_TotalSeqC,Fol_13,R2,5PNNNNNNNNNN(BC),AAATCTCTCAGGCTC,Antibody Capture
+Hashtag_14_TotalSeqC,Fol_14,R2,5PNNNNNNNNNN(BC),CTGTATGTCCGATTG,Antibody Capture
+Hashtag_15_TotalSeqC,Fol_15,R2,5PNNNNNNNNNN(BC),TAAGATTCAGAGCGA,Antibody Capture
+Hashtag_16_TotalSeqC,Fol_16,R2,5PNNNNNNNNNN(BC),CTCAGTGCATTCTGG,Antibody Capture
+Hashtag_17_TotalSeqC,Fol_17,R2,5PNNNNNNNNNN(BC),GCATTCTGTGCTATC,Antibody Capture
+Hashtag_18_TotalSeqC,Fol_18,R2,5PNNNNNNNNNN(BC),CAAACCAACAGTTCG,Antibody Capture
