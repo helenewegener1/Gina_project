@@ -1,7 +1,8 @@
 00_data/*.fastq.gz
 00_data/*.xlsx
 00_data/refdata*
-00_data/.rds
+00_data/*.rds
+00_data/Gina_HH117_PP_broadAnn.rds
 
 */script/*.log
 */script/*.err
