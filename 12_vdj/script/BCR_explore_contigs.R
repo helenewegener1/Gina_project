@@ -172,7 +172,7 @@ for (sample_name in names(bcr_seurat_obj_list)) {
 # Compare  
 sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
 group_A <- "Fol-1"
-group_B <- "Fol-5"
+group_B <- "Fol-2"
 
 clonalCompare(combined.BCR, 
               top.clones = 10, 
