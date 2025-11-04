@@ -1,6 +1,7 @@
 00_data/*.fastq.gz
 00_data/*.xlsx
 00_data/refdata*
+00_data/.rds
 
 */script/*.log
 */script/*.err
