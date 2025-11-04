@@ -66,7 +66,11 @@ x_1 %>% t() %>% as.data.frame.matrix() %>% rownames_to_column("global_class") %>
   theme_bw() + 
   scale_fill_manual(values = c("blue4", "red3", "lightblue")) + 
   labs(x = "Count", y = "")
+<<<<<<< HEAD
 ggsave("07_seurat_QC/ADT_explore/global_class.png", width = 12, height = 8)
+=======
+ggsave("07_seurat_QC/plot/ADT_explore/global_class.png", width = 12, height = 8)
+>>>>>>> clean-main
 
 # x_2 %>% t() %>% as.data.frame.matrix() %>% rownames_to_column("class") %>% 
 #   # pivot_longer(cols = c("Mem.B cells", "Tfh cells", "GC.B cells", "Naive.B cells", "PBs", "DCs")) %>% 
@@ -80,7 +84,11 @@ x_3 %>% t() %>% as.data.frame.matrix() %>% rownames_to_column("maxID") %>%
   geom_col(position = "dodge") + 
   theme_bw() + 
   labs(x = "Count")
+<<<<<<< HEAD
 ggsave("07_seurat_QC/ADT_explore/maxID_DCs.png", width = 12, height = 8)
+=======
+ggsave("07_seurat_QC/plot/ADT_explore/maxID_DCs.png", width = 12, height = 8)
+>>>>>>> clean-main
 
 x_3 %>% t() %>% as.data.frame.matrix() %>% rownames_to_column("maxID") %>% 
   pivot_longer(cols = c("Mem.B cells", "Tfh cells", "GC.B cells", "Naive.B cells", "PBs", "DCs")) %>%
@@ -88,7 +96,11 @@ x_3 %>% t() %>% as.data.frame.matrix() %>% rownames_to_column("maxID") %>%
   geom_col(position = "dodge", ) + 
   theme_bw() + 
   labs(x = "Count", y = "")
+<<<<<<< HEAD
 ggsave("07_seurat_QC/ADT_explore/maxID_all_cells.png", width = 12, height = 8)
+=======
+ggsave("07_seurat_QC/plot/ADT_explore/maxID_all_cells.png", width = 12, height = 8)
+>>>>>>> clean-main
 
 # Doublets
 df_doublets <- Gina_seurat_obj@meta.data %>% 
@@ -97,7 +109,11 @@ df_doublets <- Gina_seurat_obj@meta.data %>%
 
 table(df_doublets$ADT_maxID, df_doublets$ADT_secondID) %>% 
   heatmap(Colv = NA, Rowv = NA, main = "ADT_maxID vs ADT_secondID for Doublets", xlab = "ADT_maxID", ylab = "ADT_secondID")
+<<<<<<< HEAD
 ggsave("07_seurat_QC/ADT_explore/doublets_heatmap.png", width = 12, height = 8)
+=======
+ggsave("07_seurat_QC/plot/ADT_explore/doublets_heatmap.png", width = 12, height = 8)
+>>>>>>> clean-main
 
 
 
