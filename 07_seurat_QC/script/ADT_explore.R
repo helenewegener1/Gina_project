@@ -98,10 +98,12 @@ df_doublets <- Gina_seurat_obj@meta.data %>%
   filter(ADT_classification.global == "Doublet") %>% 
   select(starts_with("ADT"))
 
+pdf("07_seurat_QC/plot/ADT_explore/doublets_heatmap.pdf", width = 12, height = 8)
 table(df_doublets$ADT_maxID, df_doublets$ADT_secondID) %>% 
   heatmap(Colv = NA, Rowv = NA, main = "ADT_maxID vs ADT_secondID for Doublets", xlab = "ADT_maxID", ylab = "ADT_secondID")
-ggsave("07_seurat_QC/plot/ADT_explore/doublets_heatmap.png", width = 12, height = 8)
+dev.off()
 
+Gina_seurat_obj@meta.data$Celltype %>% table()
 
 
 

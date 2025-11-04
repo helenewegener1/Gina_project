@@ -55,7 +55,9 @@ for (sample in samples){
     seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
 
     # Find variable features in the ADT assay (optional but good practice)
-    seurat_obj <- HTODemux(seurat_obj, assay = "ADT", positive.quantile = 0.99)
+    seurat_obj <- HTODemux(seurat_obj, assay = "ADT", positive.quantile = 0.999)
+    seurat_obj@meta.data$ADT_classification.global %>% table()
+    seurat_obj@meta.data$ADT_maxID %>% table()
     
     ################### If only gene expression data is available ################### 
   } else { 
