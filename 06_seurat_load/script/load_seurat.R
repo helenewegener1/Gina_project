@@ -5,7 +5,7 @@ library(Seurat)
 library(glue)
 
 # Samples
-samples <- list.files("05_run_cellranger/out/") %>% str_split_i("_", 2)
+samples <- list.files("05_run_cellranger/out_main/") %>% str_split_i("_", 2)
 
 # Prep out list
 seurat_obj_list <- list()
@@ -18,7 +18,7 @@ for (sample in samples){
   # Define path to cellranger output
   # The files in the per_sample_outs directory have been demultiplexed to single samples.
   # Read more about output of cellrange multi: https://www.10xgenomics.com/support/software/cell-ranger/latest/analysis/outputs/cr-3p-outputs-cellplex
-  OUTS_DIR <- glue("05_run_cellranger/out/res_{sample}/outs/per_sample_outs/res_{sample}")
+  OUTS_DIR <- glue("05_run_cellranger/out_main/res_{sample}/outs/per_sample_outs/res_{sample}")
   
   # Read GEX counts (the default method for 10x data)
   gex.data <- Read10X(data.dir = glue("{OUTS_DIR}/count/sample_filtered_feature_bc_matrix"))
@@ -50,14 +50,6 @@ for (sample in samples){
     
     # Add ADT data as a new assay (e.g., "ADT")
     seurat_obj[["ADT"]] <- CreateAssayObject(counts = adt_counts_aligned) 
-    
-    # Normalize the ADT data (often using the CLR method)
-    seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
-
-    # Find variable features in the ADT assay (optional but good practice)
-    seurat_obj <- HTODemux(seurat_obj, assay = "ADT", positive.quantile = 0.999)
-    seurat_obj@meta.data$ADT_classification.global %>% table()
-    seurat_obj@meta.data$ADT_maxID %>% table()
     
     ################### If only gene expression data is available ################### 
   } else { 
