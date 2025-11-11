@@ -11,10 +11,10 @@
 # Define working directory (which is the out dir here)
 WD="/home/people/helweg/ciir/people/helweg/projects/Gina_project/05_run_cellranger/out"
 SAMPLE_DIR="/home/projects/dtu_00062/data/KU09/FASTQ_ku09_mkfastq/outs/fastq_path/HKL3YDSXF"
-#CONFIG_DIR="/home/people/helweg/ciir/people/helweg/projects/Gina_project/04_prep_config/out_cellranger_demultiplex"
+#CONFIG_DIR="/home/people/helweg/ciir/people/helweg/projects/Gina_project/04_prep_config/out"
 
 module load tools
-module load cellranger/8.0.0
+module load cellranger/9.0.1
 
 # Navigate to your desired output location
 cd "$WD"

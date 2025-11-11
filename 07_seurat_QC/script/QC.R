@@ -20,6 +20,23 @@ library(decontX)
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellranger filtered
 
+############################# Sanity check for ADT - pre QC #############################
+
+for (sample_name in names(seurat_obj_list)){
+  
+  seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  if ("ADT" %in% names(seurat_obj)){
+    
+    Idents(seurat_obj)
+    Idents(seurat_obj) <- "ADT_maxID"
+    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_preQC.pdf"), width = 16, height = 20)
+    
+  }
+  
+}
+
 ################################################################################
 
 # # Investigate need for removal of empty droplets 
@@ -239,8 +256,8 @@ for (sample_name in names(seurat_obj_list)){
   print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
   print("decontX")
   
-  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
   
   if (is.null(names(raw_counts))){
     
@@ -312,6 +329,24 @@ for (sample_name in names(seurat_obj_list)){
 
 saveRDS(seurat_obj_QC, "07_seurat_QC/out/seurat_obj_QC.rds")
 
+############################# Sanity check for ADT - post QC #############################
+
+# seurat_obj_QC <- readRDS("07_seurat_QC/out/seurat_obj_QC.rds")
+
+for (sample_name in names(seurat_obj_QC)){
+  
+  seurat_obj <- seurat_obj_QC[[sample_name]]
+  
+  if ("ADT" %in% names(seurat_obj)){
+    
+    Idents(seurat_obj)
+    Idents(seurat_obj) <- "ADT_maxID"
+    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_postQC.pdf"), width = 16, height = 20)
+    
+  }
+  
+}
 
 
 
