@@ -770,3 +770,23 @@ ggsave(glue("07_seurat_QC/plot/ADT_explore/consensus_HTODemux_Doublet.png"), wid
 # pheatmap(dplyr::select(df_consens, ADT_classification, MULTI_classification), cluster_rows = FALSE, cluster_cols = FALSE)
 
 # table(df_consens$ADT_classification, df_consens$MULTI_classification) %>% heatmap(Colv = NA, Rowv = NA)
+
+
+
+
+############################# Sanity check for ADT - pre QC #############################
+
+for (sample_name in names(seurat_obj_list)){
+  
+  seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  if ("ADT" %in% names(seurat_obj)){
+    
+    Idents(seurat_obj)
+    Idents(seurat_obj) <- "ADT_maxID"
+    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
+    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_preQC.pdf"), width = 16, height = 20)
+    
+  }
+  
+}
