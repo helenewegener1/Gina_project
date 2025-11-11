@@ -24,7 +24,7 @@ Gina_seurat_obj <- readRDS("00_data/Gina_HH117_PP_broadAnn.rds")
 dim(seurat_obj@assays$RNA)
 dim(Gina_seurat_obj@assays$RNA)
 
-DimPlot(Gina_seurat_obj, group.by = )
+# DimPlot(Gina_seurat_obj, group.by = )
 
 # Seurat workflow
 seurat_obj <- NormalizeData(seurat_obj)
@@ -116,13 +116,15 @@ df <- Gina_seurat_obj[["ADT"]]$counts %>%
   rownames_to_column("follicles") %>% 
   pivot_longer(cols = colnames(Gina_seurat_obj), names_to = "cell", values_to = "value")
 
-df_meta_data <- Gina_seurat_obj@meta.data %>% select(ADT_classification, ADT_maxID, ADT_classification.global) %>% rownames_to_column("cell")
+df_meta_data <- Gina_seurat_obj@meta.data %>% select(ADT_classification, ADT_maxID, ADT_classification.global, Celltype) %>% rownames_to_column("cell")
 
 df <- df %>% left_join(df_meta_data, by = "cell", relationship = "many-to-many")
 
 head(df)
 
-cell_doublets <- Gina_seurat_obj@meta.data %>% filter(ADT_classification.global == "Doublet") %>% rownames()
+cell_doublets <- Gina_seurat_obj@meta.data %>% 
+  filter(ADT_classification.global == "Doublet" & Celltype != "DCs") %>% 
+  rownames()
 
 cell_subset_list <- list(
   x1 = cell_doublets[1:5],
@@ -130,7 +132,7 @@ cell_subset_list <- list(
   x3 = cell_doublets[10:15]
 )
 
-x <- "x3"
+x <- "x1"
 
 df %>% 
   filter(cell %in% cell_subset_list[[x]]) %>%
@@ -169,7 +171,8 @@ df %>%
 
 ggsave(glue("07_seurat_QC/plot/ADT_explore/doublets_lineplot_{x}_log.png"), width = 12, height = 8)
 
-
+# Doublets investigate
+df %>% arrange(cell) %>% filter(ADT_classification.global == "Doublet") %>% head(n=20)
 
 # 
 DefaultAssay(Gina_seurat_obj)
@@ -201,3 +204,124 @@ Gina_seurat_obj@meta.data$ADT_maxID %>% table()
 # 
 # Gina_seurat_obj_multi@meta.data$MULTI_classification %>% table()
 # Gina_seurat_obj_multi@meta.data$MULTI_ID %>% table()
+
+
+
+############## Filter out DCs ############## 
+Gina_seurat_obj_DCs <- subset(Gina_seurat_obj, subset = Celltype == "DCs")
+Gina_seurat_obj_DCs$Celltype %>% table()
+
+Gina_seurat_obj_other <- subset(Gina_seurat_obj, subset = Celltype != "DCs")
+Gina_seurat_obj_other$Celltype %>% table()
+
+# Demultiplex
+Gina_seurat_obj_other <- NormalizeData(Gina_seurat_obj_other, assay = "ADT", normalization.method = "CLR")
+Gina_seurat_obj_other <- HTODemux(Gina_seurat_obj_other, assay = "ADT", positive.quantile = 0.9999)
+
+Gina_seurat_obj$ADT_classification.global %>% table()
+
+# When removing the 617 DCs we get 529 fewer negatives. 
+Gina_seurat_obj_other$ADT_classification.global %>% table()
+
+# Many negatives 
+Gina_seurat_obj_other <- MULTIseqDemux(Gina_seurat_obj_other, assay = "ADT", quantile = 0.8)
+Gina_seurat_obj_other$MULTI_ID %>% table()
+
+
+
+table(Gina_seurat_obj_other$ADT_classification.global, Gina_seurat_obj_other$MULTI_ID)
+
+# PLOT DIFFERENCE 
+
+df_other <- Gina_seurat_obj_other[["ADT"]]$counts %>% 
+  as.data.frame() %>% 
+  rownames_to_column("follicles") %>% 
+  pivot_longer(cols = colnames(Gina_seurat_obj_other), names_to = "cell", values_to = "value")
+
+df_meta_data_other <- Gina_seurat_obj_other@meta.data %>% 
+  select(MULTI_ID, MULTI_classification, ADT_maxID, ADT_classification.global, ADT_classification, Celltype) %>% rownames_to_column("cell")
+
+df_other <- df_other %>% left_join(df_meta_data_other, by = "cell", relationship = "many-to-many")
+head(df_other)
+
+df_other %>% 
+  # filter(cell %in% cell_subset_list[[x]]) %>%
+  filter(ADT_classification.global == "Doublet") %>%
+  arrange(cell) %>% 
+  head(n = 10*18) %>% 
+  ggplot(aes(x = follicles, 
+             y = value,
+             color = ADT_classification)) + 
+  # geom_col(position = "dodge") + 
+  geom_point() +
+  geom_line(aes(group = cell)) +
+  facet_wrap(vars(ADT_maxID)) +
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+  labs(
+    x = "", 
+    title = "5 cells where ADT_classification.global = 'Doublet'"
+  )
+
+ggsave(glue("07_seurat_QC/plot/ADT_explore/MULTI_ID_Negative.png"), width = 12, height = 8)
+
+df_other %>% 
+  # filter(cell %in% cell_subset_list[[x]]) %>%
+  filter(MULTI_ID == "Negative") %>%
+  arrange(cell) %>% 
+  head(n = 6*18) %>% 
+  ggplot(aes(x = follicles, 
+             y = value,
+             color = ADT_classification)) + 
+  # geom_col(position = "dodge") + 
+  geom_point() +
+  geom_line(aes(group = cell)) +
+  facet_wrap(vars(MULTI_classification)) + 
+  theme_bw() + 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))+ 
+  labs(
+    x = "", 
+    title = "5 cells where MULTI_ID = 'Negative'"
+  )
+
+ggsave(glue("07_seurat_QC/plot/ADT_explore/MULTI_ID_Negative.png"), width = 12, height = 8)
+
+# Summary of mean CLR-normalized values per hashtag
+
+# Get CLR-normalized data
+adt_data <- GetAssayData(Gina_seurat_obj_other, assay = "ADT", slot = "data")
+dim(adt_data)
+
+# Compute mean CLR value per hashtag
+adt_means <- Matrix::rowMeans(adt_data)
+
+# Summarize in a table
+adt_summary <- data.frame(
+  ADT = names(adt_means),
+  mean_CLR = adt_means,
+  median_CLR = apply(adt_data, 1, median),
+  max_CLR = apply(adt_data, 1, max)
+) %>%
+  arrange(desc(mean_CLR))
+
+adt_summary
+
+# Weak tags are the ones with low CLR mean 
+weak_tags <- adt_summary %>% arrange(mean_CLR) %>% head(6) %>% pull(ADT)
+RidgePlot(Gina_seurat_obj_other, assay = "ADT", features = weak_tags, ncol = 3)
+
+adt_summary_arrange <- adt_summary %>% arrange(ADT)
+
+#### ADT range
+Gina_seurat_obj_other[["ADT"]]$counts %>% t() %>% as.data.frame() %>% 
+  pivot_longer(cols = starts_with("Fol"), names_to = "ADT", values_to = "value") %>% 
+  mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}')) %>% 
+  ggplot(aes(x = log(value), fill = ADT_CLR_mean)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(vars(ADT_CLR_mean)) + 
+  theme_bw() + 
+  theme(legend.position = "none") 
+
+ggsave(glue("07_seurat_QC/plot/ADT_explore/fol_density_CLR.png"), width = 10, height = 7)
+
+
