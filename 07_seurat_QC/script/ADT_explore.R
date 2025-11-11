@@ -210,8 +210,6 @@ Gina_seurat_obj@meta.data$ADT_maxID %>% table()
 # Gina_seurat_obj_multi@meta.data$MULTI_classification %>% table()
 # Gina_seurat_obj_multi@meta.data$MULTI_ID %>% table()
 
-
-
 ############## Filter out DCs ############## 
 
 # Add scDblFinder info
@@ -650,6 +648,8 @@ Gina_seurat_obj_other_singlets <- MULTIseqDemux(Gina_seurat_obj_other_singlets, 
 
 Gina_seurat_obj_other_singlets@meta.data$MULTI_ID %>% table()
 
+Gina_seurat_obj_other_singlets@meta.data$MULTI_ID %>% str_replace("Fol-\\d+", "Singlet") %>% table()
+
 # Prep for compare 
 Gina_seurat_obj_other_singlets@meta.data$ADT_classification.global %>% table()
 
@@ -684,11 +684,11 @@ df_consens <- Gina_seurat_obj_other_singlets@meta.data %>%
       # if HTODemux detects a doublet and MULTIseqDemux detects a singlet - let it be a singlet IF ADT_maxID == MULTI_ID
       ADT_classification.global == "Doublet" & !(MULTI_ID %in% c("Negative", "Doublet")) & ADT_maxID == MULTI_ID ~ MULTI_ID,
       # else...
-      ADT_classification.global == "Doublet" & !(MULTI_ID %in% c("Negative", "Doublet")) ~ "Negative",
+      ADT_classification.global == "Doublet" & !(MULTI_ID %in% c("Negative", "Doublet")) & ADT_maxID != MULTI_ID ~ "Doublet",
       # if HTODemux detects a singlet and MULTIseqDemux detects a negative - let it be a singlet IF ADT_classification == MULTI_maxID
       ADT_classification.global == "Singlet" & MULTI_ID == "Negative" & ADT_classification == MULTI_maxID ~ ADT_classification,
       # else...
-      ADT_classification.global == "Singlet" & MULTI_ID == "Negative" ~ "Negative",
+      ADT_classification.global == "Singlet" & MULTI_ID == "Negative" & ADT_classification != MULTI_maxID ~ "Negative",
       
       # if HTODemux detects a doublet and MULTIseqDemux detects a negative - let it be a negative
       ADT_classification.global == "Doublet" & MULTI_ID == "Negative" ~ "Negative",
@@ -733,6 +733,10 @@ table(df_consens$ADT_consensus_soft, useNA = "always")
 
 df_consens %>% filter(!is.na(ADT_consensus_soft)) %>% nrow()
 df_consens %>% filter(!is.na(ADT_consensus_medium)) %>% nrow()
+
+df_consens$ADT_consensus_hard %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
+df_consens$ADT_consensus_medium %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
+df_consens$ADT_consensus_soft %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
 
 df_consens %>% 
   filter(MULTI_ID == "Negative") %>% 
