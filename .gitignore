@@ -13,6 +13,7 @@
 !/05_run_cellranger/out/res_*/outs/per_sample_outs/res_*/web_summary.html
 05_run_cellranger/out_test/
 05_run_cellranger/out_main/
+05_run_cellranger/out8/
 !/05_run_cellranger/out_main/res_*/outs/per_sample_outs/res_*/web_summary.html
 06_seurat_load/out/
 07_seurat_QC/out/
