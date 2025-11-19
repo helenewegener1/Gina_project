@@ -40,27 +40,6 @@ broad_markers <- update_marker_names(broad_markers, seurat_obj)
 # Update marker format for the detailed markers
 detailed_markers <- update_marker_names(detailed_markers, seurat_obj)
 
-############################# Test regression out ##############################
-
-FeaturePlot(seurat_obj, features = "nCount_RNA")
-FeaturePlot(seurat_obj, features = "percent.mt")
-
-s.genes <- Seurat::cc.genes.updated.2019$s.genes
-g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes
-
-# Cell cycle 
-seurat_obj <- CellCycleScoring(seurat_obj,
-                               s.features = s.genes,
-                               g2m.features = g2m.genes)
-
-# seurat_obj$S.Score
-# seurat_obj$G2M.Score
-# seurat_obj$Phase
-
-FeaturePlot(seurat_obj, features = "S.Score")
-FeaturePlot(seurat_obj, features = "G2M.Score")
-DimPlot(seurat_obj, group.by= "Phase")
-
 ################################################################################
 
 # Prep to save clustered seurat objects
@@ -75,11 +54,12 @@ seurat_obj_clustered_list <- list()
   seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
   
   # Create directory for plots of specific sample
-  out_dir <- glue("09_annotation_pre_integration/plot/{sample_name}")
+  out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}")
   dir.create(out_dir, showWarnings = FALSE)
   
-  # Calculate vars.to.regress
-  
+  n_dim <- 30
+  res <- 0.3
+  n_cells <- ncol(seurat_obj) 
   
   # Seurat workflow
   # seurat_obj <- NormalizeData(seurat_obj)
@@ -87,20 +67,42 @@ seurat_obj_clustered_list <- list()
   # seurat_obj <- ScaleData(seurat_obj)
   # seurat_obj <- ScaleData(seurat_obj, vars.to.regress = c(""))
   # seurat_obj <- SCTransform(seurat_obj)
-  seurat_obj <- SCTransform(seurat_obj, vars.to.regress = c("percent.mt"))
+  seurat_obj <- SCTransform(seurat_obj)
   DefaultAssay(seurat_obj)
   seurat_obj <- RunPCA(seurat_obj)
   ElbowPlot(seurat_obj)
-  seurat_obj <- FindNeighbors(seurat_obj,  dims = 1:30)
-  seurat_obj <- FindClusters(seurat_obj, resolution = 0.2)
-  seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:20)
+  seurat_obj <- FindNeighbors(seurat_obj,  dims = 1:n_dim)
+  seurat_obj <- FindClusters(seurat_obj, resolution = res)
+  seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:n_dim)
   
-  DimPlot(seurat_obj, label = TRUE, group.by = "seurat_clusters") + 
-    labs(title = "Seurat clusters") + NoLegend()
-  ggsave(glue("{out_dir}/{sample_name}_DimPlot.pdf"), width = 8, height = 7)
+  # Feature plots
+  features <- c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", "scDblFinder.score")
+  # seurat_obj$scDblFinder.score
+  for (feature in features){
+    
+    FeaturePlot(seurat_obj, features = feature) + 
+      labs(
+        title = feature, 
+        caption = glue("N cells: {n_cells}")
+      )
+    
+    ggsave(glue("{out_dir}/{sample_name}_{feature}.pdf"), width = 8, height = 7)
+    
+  }
   
-  # Number of cells 
-  n_cells <- ncol(seurat_obj) 
+  # Doublet Dimplot 
+  DimPlot(seurat_obj, group.by = "scDblFinder.class") + 
+    labs(
+      caption = glue("N cells: {n_cells}")
+    )
+  ggsave(glue("{out_dir}/{sample_name}_scDblFinder.class.pdf"), width = 8, height = 7)
+  
+  DimPlot(seurat_obj, label = TRUE, group.by = "seurat_clusters") + NoLegend() + 
+    labs(
+      title = "Seurat clusters", 
+      caption = glue("N cells: {n_cells}\nN dim: {n_dim}\nResolution: {res}")
+    )
+  ggsave(glue("{out_dir}/{sample_name}_DimPlot.pdf"), width = 8, height = 8)
   
   # FeaturePlot with broad_markers 
   for (markers in names(broad_markers)){

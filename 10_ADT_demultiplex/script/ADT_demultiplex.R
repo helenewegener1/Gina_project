@@ -64,7 +64,7 @@ adt_summary %>% arrange(ADT)
 # weak_tags <- adt_summary %>% arrange(mean_CLR) %>% head(6) %>% pull(ADT)
 # RidgePlot(Gina_seurat_obj_other, assay = "ADT", features = weak_tags, ncol = 3)
 
-# ADT range
+# log count value range
 seurat_obj[["ADT"]]$counts %>% t() %>% as.data.frame() %>% 
   pivot_longer(cols = starts_with("Fol"), names_to = "ADT", values_to = "counts") %>% 
   mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}')) %>% 
@@ -74,7 +74,31 @@ seurat_obj[["ADT"]]$counts %>% t() %>% as.data.frame() %>%
   theme_bw() + 
   theme(legend.position = "none") 
 
+ggsave(glue("10_ADT_demultiplex/plot/ADT_log_counts_density.png"), width = 10, height = 7)
+
+# CLR value range
+seurat_obj[["ADT"]]$data %>% t() %>% as.data.frame() %>% 
+  pivot_longer(cols = starts_with("Fol"), names_to = "ADT", values_to = "CLR") %>% 
+  mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}')) %>% 
+  ggplot(aes(x = CLR, fill = ADT_CLR_mean)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(vars(ADT_CLR_mean)) + 
+  theme_bw() + 
+  theme(legend.position = "none") 
+
 ggsave(glue("10_ADT_demultiplex/plot/ADT_CLR_values_density.png"), width = 10, height = 7)
+
+# log CLR range
+seurat_obj[["ADT"]]$data %>% t() %>% as.data.frame() %>% 
+  pivot_longer(cols = starts_with("Fol"), names_to = "ADT", values_to = "CLR") %>% 
+  mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}')) %>% 
+  ggplot(aes(x = log(CLR), fill = ADT_CLR_mean)) + 
+  geom_density(alpha = 0.5) + 
+  facet_wrap(vars(ADT_CLR_mean)) + 
+  theme_bw() + 
+  theme(legend.position = "none") 
+
+ggsave(glue("10_ADT_demultiplex/plot/ADT_log_CLR_values_density.png"), width = 10, height = 7)
 
 # 99th quantile (default thershold for HTODemux)
 adt_long <- seurat_obj[["ADT"]]$data %>% t() %>% as.data.frame() %>% 
@@ -97,33 +121,33 @@ n_q99 <- ceiling(n_q99)
 
 # ADT range with vertical line at 99th quantile 
 n_above_quantile %>% 
-  ggplot(aes(x = CLR, fill = ADT_CLR_mean)) + 
+  ggplot(aes(x = log(CLR), fill = ADT_CLR_mean)) + 
   geom_density(alpha = 0.5) + 
-  geom_vline(aes(xintercept = q99), linetype = "dashed") +
+  geom_vline(aes(xintercept = log(q99)), linetype = "dashed") +
   facet_wrap(vars(ADT_CLR_mean)) +
   theme_bw() + 
   theme(legend.position = "none") + 
   labs(subtitle = glue("q99, n = {n_q99}"))
 
-ggsave(glue("10_ADT_demultiplex/plot/ADT_CLR_values_q99_density.png"), width = 10, height = 7)
+ggsave(glue("10_ADT_demultiplex/plot/ADT_log_CLR_values_q99_density.png"), width = 10, height = 7)
 
-# FeatureScatter Plots 
-for (i in 1:(n-1)) {
-  for (j in (i+1):n) {
-    fol1 <- fols[i]
-    fol2 <- fols[j]
-    
-    p <- FeatureScatter(seurat_obj, feature1 = fol1, feature2 = fol2, slot = "data") # data == CLR transformed
-    
-    # Save plot
-    ggsave(
-      filename = glue("10_ADT_demultiplex/plot/FeatureScatter/FeatureScatter_{fol1}_{fol2}.png"),
-      plot = p,
-      width = 10,
-      height = 8
-    )
-  }
-}
+# # FeatureScatter Plots 
+# for (i in 1:(n-1)) {
+#   for (j in (i+1):n) {
+#     fol1 <- fols[i]
+#     fol2 <- fols[j]
+#     
+#     p <- FeatureScatter(seurat_obj, feature1 = fol1, feature2 = fol2, slot = "data") # data == CLR transformed
+#     
+#     # Save plot
+#     ggsave(
+#       filename = glue("10_ADT_demultiplex/plot/FeatureScatter/FeatureScatter_{fol1}_{fol2}.png"),
+#       plot = p,
+#       width = 10,
+#       height = 8
+#     )
+#   }
+# }
 
 ###################### CONSENSUS OF HTODemux AND HTODemux ######################
 
@@ -214,9 +238,16 @@ table(df_consens$ADT_consensus_hard, useNA = "always")
 table(df_consens$ADT_consensus_medium, useNA = "always")
 table(df_consens$ADT_consensus_soft, useNA = "always")
 
-df_consens$ADT_consensus_hard %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
-df_consens$ADT_consensus_medium %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
-df_consens$ADT_consensus_soft %>% str_replace("Fol-\\d+", "Singlet") %>% table(useNA = "ifany")
+df_consens$ADT_classification.global %>% table()
+df_consens$MULTI_classification.global %>% table()
+
+df_consens$ADT_consensus_hard.global <- df_consens$ADT_consensus_hard %>% str_replace("Fol-\\d+", "Singlet") 
+df_consens$ADT_consensus_medium.global <- df_consens$ADT_consensus_medium %>% str_replace("Fol-\\d+", "Singlet") 
+df_consens$ADT_consensus_soft.global <- df_consens$ADT_consensus_soft %>% str_replace("Fol-\\d+", "Singlet")
+
+table(df_consens$ADT_consensus_hard.global, useNA = "always")
+table(df_consens$ADT_consensus_medium.global, useNA = "always")
+table(df_consens$ADT_consensus_soft.global, useNA = "always")
 
 # When MULTIseqDemux detects Negative, what does HTODemux detect?
 df_consens %>% 
@@ -251,6 +282,10 @@ seurat_obj@meta.data$ADT_consensus_hard <- df_consens$ADT_consensus_hard
 seurat_obj@meta.data$ADT_consensus_medium <- df_consens$ADT_consensus_medium
 seurat_obj@meta.data$ADT_consensus_soft<- df_consens$ADT_consensus_soft
 
+seurat_obj@meta.data$ADT_consensus_hard.global<- df_consens$ADT_consensus_hard.global
+seurat_obj@meta.data$ADT_consensus_medium.global<- df_consens$ADT_consensus_medium.global
+seurat_obj@meta.data$ADT_consensus_soft.global <- df_consens$ADT_consensus_soft.global
+
 ############################### ADT Ridge Plots ################################ 
 
 idents <- c("ADT_maxID", "ADT_ID", "ADT_consensus_medium", "ADT_consensus_soft")
@@ -262,6 +297,38 @@ for (ident in idents){
   ggsave(glue("10_ADT_demultiplex/plot/RidgePlot_{ident}.pdf"), width = 16, height = 20)
   
 }
+
+################################### DimPlot ####################################
+
+DimPlot(seurat_obj, group.by = "ADT_classification.global")
+DimPlot(seurat_obj, group.by = "MULTI_classification.global")
+
+# Consensus
+DimPlot(seurat_obj, group.by = "ADT_consensus_hard.global")
+DimPlot(seurat_obj, group.by = "ADT_consensus_medium.global")
+DimPlot(seurat_obj, group.by = "ADT_consensus_soft.global")
+
+seurat_obj$ADT_consensus_soft
+
+################################### tSNE ####################################
+
+Idents(seurat_obj) <- "ADT_consensus_soft.global"
+
+# First, we will remove negative cells from the object
+seurat_obj.subset <- subset(seurat_obj, idents = "Negative", invert = TRUE)
+
+# Calculate a tSNE embedding of the HTO data
+DefaultAssay(seurat_obj.subset) <- "ADT"
+seurat_obj.subset <- ScaleData(seurat_obj.subset, features = rownames(seurat_obj.subset), verbose = FALSE)
+seurat_obj.subset <- RunPCA(seurat_obj.subset, features = rownames(seurat_obj.subset), approx = FALSE)
+seurat_obj.subset <- RunUMAP(seurat_obj.subset, dims = 1:8, perplexity = 100)
+seurat_obj.subset <- RunTSNE(seurat_obj.subset, dims = 1:8, perplexity = 100)
+
+DimPlot(seurat_obj.subset, reduction = "umap")
+ggsave("10_ADT_demultiplex/plot/DimPlot_Doublet_Singlet_umap.png", width = 9, height = 7)
+
+DimPlot(seurat_obj.subset, reduction = "tsne")
+ggsave("10_ADT_demultiplex/plot/DimPlot_Doublet_Singlet_tsne.png", width = 9, height = 7)
 
 ####################### Export ADT demultiplexed objects ####################### 
 
