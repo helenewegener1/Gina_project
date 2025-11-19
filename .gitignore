@@ -18,6 +18,8 @@
 06_seurat_load/out/
 07_seurat_QC/out/
 08_seurat_QC_filtering/out/
+09_annotation_pre_integration/out/
+10_ADT_demultiplex/out/
 
 Gina_project.Rproj
 .Rproj.user
