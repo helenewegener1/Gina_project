@@ -39,7 +39,7 @@ plot_qc <- function(seurat_obj, sample_name, version = "raw", filtering = ""){
 pre_filter_pipeline <- function(seurat_obj){
 
   # Remove doublets 
-  seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+  # seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
   
   # Compute QC metrics
   seurat_obj <- compute_QC_metrics(seurat_obj)
@@ -49,6 +49,9 @@ pre_filter_pipeline <- function(seurat_obj){
           sample_name = sample_name, 
           version = "raw", 
           filtering = "")
+  
+  FeatureScatter(seurat_obj, feature1 = "nFeature_RNA", feature2 = "percent.mt") 
+  ggsave(glue("08_seurat_QC_filtering/plot/{sample_name}_nFeature_vs_MT_plot.png"), width = 10, height = 8)
   
   return(seurat_obj)
   

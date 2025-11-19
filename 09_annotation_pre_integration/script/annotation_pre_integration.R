@@ -70,7 +70,7 @@ seurat_obj_clustered_list <- list()
 # Make FeaturePlots with the marker genes for each sample
 for (sample_name in names(seurat_obj_QC_filtered_list)){
   
-  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
   
   # Define specific seurat object 
   seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
