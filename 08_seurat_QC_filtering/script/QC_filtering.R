@@ -14,6 +14,7 @@ seurat_obj_list <- readRDS("07_seurat_QC/out/seurat_obj_QC.rds")
 
 # Initialize filtered list
 seurat_obj_QC_filtered_list <- rep(0, length(seurat_obj_list)) %>% as.list()
+names(seurat_obj_QC_filtered_list) <- names(seurat_obj_list)
 
 # Check samples
 names(seurat_obj_list)
