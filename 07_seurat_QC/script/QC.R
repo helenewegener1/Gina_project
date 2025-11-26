@@ -20,23 +20,6 @@ library(decontX)
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellranger filtered
 
-############################# Sanity check for ADT - pre QC #############################
-
-for (sample_name in names(seurat_obj_list)){
-  
-  seurat_obj <- seurat_obj_list[[sample_name]]
-  
-  if ("ADT" %in% names(seurat_obj)){
-    
-    Idents(seurat_obj)
-    Idents(seurat_obj) <- "ADT_maxID"
-    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
-    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_preQC.pdf"), width = 16, height = 20)
-    
-  }
-  
-}
-
 ################################################################################
 
 # # Investigate need for removal of empty droplets 
@@ -256,8 +239,8 @@ for (sample_name in names(seurat_obj_list)){
   print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
   print("decontX")
   
-  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out8/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out8/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
   
   if (is.null(names(raw_counts))){
     
@@ -329,26 +312,30 @@ for (sample_name in names(seurat_obj_list)){
 
 saveRDS(seurat_obj_QC, "07_seurat_QC/out/seurat_obj_QC.rds")
 
-############################# Sanity check for ADT - post QC #############################
-
-# seurat_obj_QC <- readRDS("07_seurat_QC/out/seurat_obj_QC.rds")
+# doublet check 
+# Doublet class VS nFeature_RNA and nCount_RNA
 
 for (sample_name in names(seurat_obj_QC)){
   
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
   seurat_obj <- seurat_obj_QC[[sample_name]]
   
-  if ("ADT" %in% names(seurat_obj)){
-    
-    Idents(seurat_obj)
-    Idents(seurat_obj) <- "ADT_maxID"
-    RidgePlot(seurat_obj, assay = "ADT", features = rownames(seurat_obj[["ADT"]]))
-    ggsave(glue("07_seurat_QC/plot/ADT_RidgePlot/RidgePlot_{sample_name}_postQC.pdf"), width = 16, height = 20)
-    
-  }
+  n_singlets <- seurat_obj$scDblFinder.class %>% str_count("singlet") %>% sum()
+  n_doublet <- seurat_obj$scDblFinder.class %>% str_count("doublet") %>% sum()
+  
+  p1 <- VlnPlot(seurat_obj, features = "nFeature_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend() + 
+    labs(caption = glue("singlets: {n_singlets}\ndoublets: {n_doublet}"))
+  p2 <- VlnPlot(seurat_obj, features = "nCount_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend()
+  
+  p <- p1/p2
+  
+  ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_doublets_vs_nGENES.png"), width = 8, height = 12)
+  
+  FeatureScatter(seurat_obj, feature1 = "nFeature_RNA", feature2 = "nCount_RNA", group.by = "scDblFinder.class", log = TRUE) 
+  ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_nFeature_vs_nCount.png"), width = 10, height = 8)
+  
   
 }
-
-
 
 
 
