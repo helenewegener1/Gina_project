@@ -53,10 +53,11 @@ g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes
 seurat_obj_clustered_list <- list()
 
 # Define number of dimensions for clustering and resolution of clusters. 
-n_dim <- 30 
+# n_dim <- 20 # standard flow
+n_dim <- 30 # SCTransform
 res <- 0.3
 
-# for (sample_name in names(seurat_obj_QC_filtered_list)){
+for (sample_name in names(seurat_obj_QC_filtered_list)){
   
   # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
   
@@ -80,10 +81,10 @@ res <- 0.3
   # seurat_obj$Phase - discrete 
   
   ############################## Seurat workflow ###############################
-  seurat_obj <- NormalizeData(seurat_obj)
-  seurat_obj <- FindVariableFeatures(seurat_obj)
-  seurat_obj <- ScaleData(seurat_obj)
-  # seurat_obj <- SCTransform(seurat_obj)
+  # seurat_obj <- NormalizeData(seurat_obj)
+  # seurat_obj <- FindVariableFeatures(seurat_obj)
+  # seurat_obj <- ScaleData(seurat_obj)
+  seurat_obj <- SCTransform(seurat_obj)
   DefaultAssay(seurat_obj)
   seurat_obj <- RunPCA(seurat_obj)
   ElbowPlot(seurat_obj)
@@ -164,7 +165,59 @@ res <- 0.3
   # Save clustered seurat object 
   seurat_obj_clustered_list[[sample_name]] <- seurat_obj
   
-# }
+}
+
+# Save object 
+saveRDS(seurat_obj_clustered_list, "09_seurat_QC_clusters/out/seurat_obj_clustered_list.rds")
+
+################################################################################ 
+################################### Doublets ###################################
+
+# Functions for plotting
+source("09_seurat_QC_clusters/script/functions.R")
+
+# Add columns with co-expression of markers from different cell types (very likely doublets)
+# Define marker sets
+B_markers <- c("MS4A1","CD79A","CD79B","CD19") 
+T_markers <- c("CD3D","CD3E","CD3G","TRAC") 
+Myeloid_markers <- c("LYZ","S100A8","S100A9","CTSS","FCGR3A") 
+Plasma_markers <- c("SDC1","MZB1","XBP1","PRDM1")
+
+marker_pairs <- combn(c("percent_B", "percent_T", "percent_Myeloid", "percent_Plasma"), 2, simplify = FALSE)
+
+for (sample_name in names(seurat_obj_clustered_list)){
+  
+  sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  seurat_obj <- seurat_obj_clustered_list[[sample_name]]
+  
+  table(seurat_obj$scDblFinder.class)
+  
+  # Create directory for plots of specific sample
+  out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}/doublet")
+  dir.create(out_dir, showWarnings = FALSE)
+  
+  doublet_N_genes(seurat_obj, sample_name)
+  
+  seurat_obj$percent_B       <- PercentageFeatureSet(seurat_obj, features = B_markers)
+  seurat_obj$percent_T       <- PercentageFeatureSet(seurat_obj, features = T_markers)
+  seurat_obj$percent_Myeloid <- PercentageFeatureSet(seurat_obj, features = Myeloid_markers)
+  seurat_obj$percent_Plasma  <- PercentageFeatureSet(seurat_obj, features = Plasma_markers)
+  
+  for (pair in marker_pairs) {
+    
+    marker_1 <- pair[1]   # "B"
+    marker_2 <- pair[2]   # "T"
+    
+    # marker_1 <- "percent_B"
+    # marker_2 <- "percent_T"     
+    
+    doublet_dual_lineages(seurat_obj, sample_name, marker_1 = marker_1, marker_2 = marker_2)
+
+  }
+  
+}
+
+
 
 ################################################################################ 
 ################################ DC Annotation #################################
