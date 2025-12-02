@@ -43,7 +43,7 @@ detailed_markers <- update_marker_names(detailed_markers, seurat_obj)
 ############################# Get cell cycle score #############################
 
 s.genes <- Seurat::cc.genes.updated.2019$s.genes
-g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes
+g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes # MKI67 in here 
 
 ################################################################################
 
@@ -225,23 +225,34 @@ for (sample_name in names(seurat_obj_clustered_list)){
 # Venla annotate after human atlas projection of v.8 object?
 
 sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-seurat_obj <- seurat_obj_clustered_list[[sample_name]]
+seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
 
-DimPlot(seurat_obj, label = TRUE) + NoLegend()
+DimPlot(seurat_obj, label = TRUE, group.by = "RNA_snn_res.0.5") + NoLegend()
 
-cluster.markers <- FindAllMarkers(seurat_obj, only.pos = TRUE)
+cluster.markers <- FindAllMarkers(seurat_obj, group.by = "RNA_snn_res.0.5", only.pos = TRUE)
+broad_markers[["DC"]] <- c(
+    "ITGAX", "HLA-DRA", "HLA-DRB1",
+    "CLEC9A",    # cDC1
+    "XCR1",      # cDC1
+    "CLEC10A",   # cDC2
+    "CD1C",      # cDC2
+    "LILRA4",    # pDC
+    "CLEC4C",    # pDC
+    "CD86", "CCR7"   # activated/migratory DCs
+  )
+
 cluster.markers[broad_markers[["DC"]], ]
 
 # Define DC cluster numbers
-dc_clusters <- c(7)
+dc_clusters <- c(2, 4, 8, 14)
 
 # Create a new logical column
 seurat_obj$DC_bool <- ifelse(seurat_obj$seurat_clusters %in% dc_clusters, TRUE, FALSE)
 table(seurat_obj$DC_bool)
 
 # Ginas annotation 
-Gina_seurat <- readRDS("00_data/Gina_HH117_PP_broadAnn.rds")
-table(Gina_seurat$Celltype)
+# Gina_seurat <- readRDS("00_data/Gina_HH117_PP_broadAnn.rds")
+# table(Gina_seurat$Celltype)
 
 # Plot
 # DimPlot(seurat_obj, group.by = "seurat_clusters", label = TRUE) + NoLegend() + 

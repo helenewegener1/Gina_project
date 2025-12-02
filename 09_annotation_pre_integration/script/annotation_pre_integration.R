@@ -134,9 +134,10 @@ seurat_obj_clustered_list <- list()
 sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
 seurat_obj <- seurat_obj_clustered_list[[sample_name]]
 
-DimPlot(seurat_obj, label = TRUE) + NoLegend()
+DimPlot(seurat_obj, label = TRUE, group.by = "RNA_snn_res.0.5") + NoLegend()
+DimPlot(seurat_obj, label = TRUE, group.by = "scDblFinder.class") + NoLegend()
 
-cluster.markers <- FindAllMarkers(seurat_obj, only.pos = TRUE)
+cluster.markers <- FindAllMarkers(seurat_obj, group.by = "RNA_snn_res.0.5", only.pos = TRUE)
 cluster.markers[broad_markers[["DC"]], ]
 
 # Define DC cluster numbers

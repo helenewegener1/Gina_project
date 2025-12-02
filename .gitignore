@@ -1,3 +1,7 @@
+.DS_Store
+*/.DS_Store
+*/*/.DS_Store
+
 00_data/*.fastq.gz
 00_data/*.xlsx
 00_data/refdata*
