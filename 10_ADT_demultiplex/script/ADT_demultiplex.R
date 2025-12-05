@@ -157,60 +157,164 @@ for (fol in fols){
 
 ############################## Manual threshold ################################ 
 
-thresholds <- c(
-  "Fol-1" = 2.4,
+# three thresholds <- cut_close_to_noise, cut_in_middle, cut_close_to_signal
+
+cut_close_to_noise_thresholds <- c(
+  "Fol-1" = 1.75,
+  "Fol-2" = 1.8,
+  "Fol-3" = 1.5,
+  "Fol-4" = 1.4,
+  "Fol-5" = 1.4,
+  "Fol-6" = 1.75,
+  "Fol-7" = 1.7,
+  "Fol-8" = 1.4,
+  "Fol-9" = 2.25,
+  "Fol-10" = 2,
+  "Fol-11" = 1.4,
+  "Fol-12" = 1.2,
+  "Fol-13" = 1.2,
+  "Fol-14" = 1.5,
+  "Fol-15" = 1.75,
+  "Fol-16" = 2.5,
+  "Fol-17" = 1.5,
+  "Fol-18" = 1.25
+)
+
+cut_in_middle_thresholds <- c(
+  "Fol-1" = 2,
   "Fol-2" = 2.1,
+  "Fol-3" = 2,
+  "Fol-4" = 1.74,
+  "Fol-5" = 1.6,
+  "Fol-6" = 2,
+  "Fol-7" = 2.4,
+  "Fol-8" = 1.75,
+  "Fol-9" = 2.75,
+  "Fol-10" = 2.75,
+  "Fol-11" = 1.75,
+  "Fol-12" = 1.4,
+  "Fol-13" = 1.3,
+  "Fol-14" = 2.5,
+  "Fol-15" = 2.75,
+  "Fol-16" = 3.50,
+  "Fol-17" = 2,
+  "Fol-18" = 1.5
+)
+
+cut_close_to_signal_thresholds <- c(
+  "Fol-1" = 2.5,
+  "Fol-2" = 2.2,
   "Fol-3" = 2.75,
   "Fol-4" = 2.25,
   "Fol-5" = 1.9,
-  "Fol-6" = 2.25,
+  "Fol-6" = 2.3,
   "Fol-7" = 3.3,
   "Fol-8" = 2,
   "Fol-9" = 3.75,
   "Fol-10" = 3.25,
   "Fol-11" = 2,
-  "Fol-12" = 1.4,
-  "Fol-13" = 1.3,
+  "Fol-12" = 1.6,
+  "Fol-13" = 1.4,
   "Fol-14" = 3,
-  "Fol-15" = 3,
+  "Fol-15" = 3.5,
   "Fol-16" = 4.5,
-  "Fol-17" = 2,
-  "Fol-18" = 1.5
+  "Fol-17" = 2.5,
+  "Fol-18" = 1.75
 )
 
+# Pull CLR ADT matrix
 clr_counts <- seurat_obj[["ADT"]]$data
 
-# Initialize empty matrix to store positive calls
-pos_matrix <- matrix(0, nrow = nrow(clr_counts), ncol = ncol(clr_counts),
-                     dimnames = dimnames(clr_counts))
-
-# Loop through hashtags and apply threshold
-for (h in rownames(clr_counts)) {
-  pos_matrix[h, ] <- clr_counts[h, ] > thresholds[h]
+# ---------- UNIVERSAL FUNCTION ----------
+manual_call <- function(clr_matrix, thresholds) {
+  
+  # Boolean matrix: ADT > threshold ?
+  pos_matrix <- sweep(clr_matrix, 1, thresholds, FUN = ">")
+  
+  # How many ADTs positive per cell
+  pos_counts <- colSums(pos_matrix)
+  
+  # Initialize calls
+  cell_id <- rep("Negative", ncol(clr_matrix))
+  
+  # For singlets: pick the ADT with highest CLR *among positives*
+  is_singlet <- pos_counts == 1
+  if (any(is_singlet)) {
+    # Pick exactly the row where pos_matrix is TRUE
+    singlet_ADT <- apply(pos_matrix[, is_singlet, drop = FALSE], 2,
+                         function(x) rownames(pos_matrix)[which(x)])
+    cell_id[is_singlet] <- singlet_ADT
+  }
+  
+  # Doublets
+  cell_id[pos_counts > 1] <- "Doublet"
+  
+  # Classification column
+  classification <- ifelse(cell_id == "Negative", "Negative",
+                           ifelse(cell_id == "Doublet", "Doublet", "Singlet"))
+  
+  return(list(id = cell_id, class = classification))
 }
 
-# Count positives per cell
-pos_counts <- colSums(pos_matrix)
 
-# Assign singlet/doublet/negative
-cell_class <- rep("Negative", ncol(clr_counts))
-cell_class[pos_counts == 1] <- rownames(pos_matrix)[apply(pos_matrix, 2, which.max)][pos_counts == 1]
-cell_class[pos_counts > 1] <- "Doublet"
+# ---------- APPLY TO ALL 3 THRESHOLD SETS ----------
+# 1) close to noise
+res_noise <- manual_call(clr_counts, cut_close_to_noise_thresholds)
+seurat_obj$manual_ADT_ID_cut_close_to_noise <- res_noise$id
+seurat_obj$manual_ADT_class_cut_close_to_noise <- res_noise$class
 
-cell_class %>% table()
+seurat_obj$manual_ADT_class_cut_close_to_noise %>% table()
 
-# Insert manual ADT demultplexing in seurat object
-seurat_obj$manual_ADT_ID <- cell_class
-seurat_obj$manual_ADT_classification <- seurat_obj$manual_ADT_ID %>% str_replace("Fol-\\d+", "Singlet")
+# 2) middle
+res_middle <- manual_call(clr_counts, cut_in_middle_thresholds)
+seurat_obj$manual_ADT_ID_cut_in_middle <- res_middle$id
+seurat_obj$manual_ADT_class_cut_in_middle <- res_middle$class
 
-# Compare to tools 
-seurat_obj$manual_ADT_ID %>% table()
+seurat_obj$manual_ADT_class_cut_in_middle %>% table()
+
+# 3) close to signal
+res_signal <- manual_call(clr_counts, cut_close_to_signal_thresholds)
+seurat_obj$manual_ADT_ID_cut_close_to_signal <- res_signal$id
+seurat_obj$manual_ADT_class_cut_close_to_signal <- res_signal$class
+
+seurat_obj$manual_ADT_class_cut_close_to_signal %>% table()
+
+# clr_counts <- seurat_obj[["ADT"]]$data
+# 
+# # Initialize empty matrix to store positive calls
+# pos_matrix <- matrix(0, nrow = nrow(clr_counts), ncol = ncol(clr_counts),
+#                      dimnames = dimnames(clr_counts))
+# 
+# # Loop through hashtags and apply threshold
+# for (h in rownames(clr_counts)) {
+#   pos_matrix[h, ] <- clr_counts[h, ] > cut_close_to_noise_thresholds[h]
+# }
+# 
+# # Count positives per cell
+# pos_counts <- colSums(pos_matrix)
+# 
+# # Assign singlet/doublet/negative
+# cell_class <- rep("Negative", ncol(clr_counts))
+# cell_class[pos_counts == 1] <- rownames(pos_matrix)[apply(pos_matrix, 2, which.max)][pos_counts == 1]
+# cell_class[pos_counts > 1] <- "Doublet"
+# 
+# cell_class %>% table()
+# 
+# # Insert manual ADT demultplexing in seurat object
+# seurat_obj$manual_ADT_ID_cut_close_to_noise_thresholds <- cell_class
+# seurat_obj$manual_ADT_classification_cut_close_to_noise_thresholds <- seurat_obj$manual_ADT_ID %>% str_replace("Fol-\\d+", "Singlet")
+
+############################### Compare to tools ###############################
+
 seurat_obj$ADT_ID %>% table()
 seurat_obj$MULTI_ID_0.7 %>% table()
 seurat_obj$MULTI_ID_autoThresh %>% table()
 
 df_compare_demux <- list(
-  DIY = cell_class %>% table(),
+  # DIY = cell_class %>% table(),
+  manual_ADT_ID_cut_close_to_noise = seurat_obj$manual_ADT_ID_cut_close_to_noise %>% table(),
+  manual_ADT_ID_cut_in_middle = seurat_obj$manual_ADT_ID_cut_in_middle %>% table(),
+  manual_ADT_ID_cut_close_to_signal = seurat_obj$manual_ADT_ID_cut_close_to_signal %>% table(),
   HTO_0.999 = seurat_obj$ADT_ID %>% table(),
   MULTI_ID_0.7 = seurat_obj$MULTI_ID_0.7 %>% table(), 
   MULTI_ID_autoThresh = seurat_obj$MULTI_ID_autoThresh %>% table()
@@ -227,24 +331,47 @@ df_compare_demux <- df_compare_demux %>% mutate(N_drop_outs = Doublet + Negative
 text_box = glue(
   "
       N drop out
-      DIY: {df_compare_demux[df_compare_demux$Method == 'DIY', 'N_drop_outs']}
+      Manual cut close to noise: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_close_to_noise', 'N_drop_outs']}
+      Manual cut close to middle: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_in_middle', 'N_drop_outs']}
+      Manual cut close to signal: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_close_to_signal', 'N_drop_outs']}
       HTO_0.999: {df_compare_demux[df_compare_demux$Method == 'HTO_0.999', 'N_drop_outs']}
       MULTI_ID_0.7: {df_compare_demux[df_compare_demux$Method == 'MULTI_ID_0.7', 'N_drop_outs']}
       MULTI_ID_autoThresh: {df_compare_demux[df_compare_demux$Method == 'MULTI_ID_autoThresh', 'N_drop_outs']}
       "
 )
 
-# Bar plot
+# Bar plot comparing tools 
 library(wesanderson)
 df_compare_demux_long %>% 
   ggplot(aes(y = class, x = count, fill = Method)) + 
   geom_col(position = "dodge") + 
   theme_bw() + 
   # scale_fill_manual(values = c("hotpink", "blue4", "green4", "red4"))
-  scale_fill_manual(values = wes_palette("Moonrise3", n = 4)) + 
+  scale_fill_manual(values = c(wes_palette("Moonrise3", n = 5), wes_palette("Moonrise2", n = 2)[2])) +
   annotate("text", x=2500, y=10, label= text_box)
 
-ggsave(glue("10_ADT_demultiplex/plot/ADT_manual_VS_tool.png"), width = 10, height = 7)
+ggsave(glue("10_ADT_demultiplex/plot/ADT_barplot_manual_VS_tool.png"), width = 10, height = 7)
+
+# Bar plot only manual 
+text_box = glue(
+  "
+      N drop out
+      Manual cut close to noise: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_close_to_noise', 'N_drop_outs']}
+      Manual cut close to middle: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_in_middle', 'N_drop_outs']}
+      Manual cut close to signal: {df_compare_demux[df_compare_demux$Method == 'manual_ADT_ID_cut_close_to_signal', 'N_drop_outs']}
+  "
+)
+
+df_compare_demux_long %>% 
+  filter(startsWith(Method, "manual")) %>% 
+  ggplot(aes(y = class, x = count, fill = Method)) + 
+  geom_col(position = "dodge") + 
+  theme_bw() + 
+  # scale_fill_manual(values = c("hotpink", "blue4", "green4", "red4"))
+  scale_fill_manual(values = wes_palette("Moonrise3", n = 5)[2:4]) +
+  annotate("text", x=1500, y=10, label= text_box)
+
+ggsave(glue("10_ADT_demultiplex/plot/ADT_barplot_manual.png"), width = 10, height = 7)
 
 
 ######################## Investigate individual cells ########################## 
@@ -260,7 +387,7 @@ cell_ADT <- seurat_obj@meta.data[cell_id, ]$ADT_classification
 cell_MULTI_0.7 <- seurat_obj@meta.data[cell_id, ]$MULTI_classification_0.7
 cell_MULTI_autoThresh <- seurat_obj@meta.data[cell_id, ]$MULTI_classification_autoThresh
 cell_manual_ADT <- seurat_obj@meta.data[cell_id, ]$manual_ADT_ID
-adt_summary <- adt_summary %>% rownames_to_column("Fol")
+# adt_summary <- adt_summary %>% rownames_to_column("Fol")
 
 one_cell <- seurat_obj[["ADT"]]$data[,cell_id] %>% as.data.frame() %>% rownames_to_column("Fol")
 colnames(one_cell) <- c("Fol", cell_id)

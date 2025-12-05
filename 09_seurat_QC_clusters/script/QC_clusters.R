@@ -12,6 +12,10 @@ library(purrr) # map funciton
 # Load data
 seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 
+# Check that doublets are removed 
+# seurat_obj_QC_filtered_list$`HH117-SILP-INF-PC`$scDblFinder.class %>% table()
+# seurat_obj_QC_filtered_list$`HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1`$scDblFinder.class %>% table()
+
 # Load Gina annotation file 
 broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "Very broad level")
 detailed_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "More detailed level")
@@ -173,51 +177,51 @@ saveRDS(seurat_obj_clustered_list, "09_seurat_QC_clusters/out/seurat_obj_cluster
 ################################################################################ 
 ################################### Doublets ###################################
 
-# Functions for plotting
-source("09_seurat_QC_clusters/script/functions.R")
+# Lars says to trust scdoubletfinder, so we do. 
 
-# Add columns with co-expression of markers from different cell types (very likely doublets)
-# Define marker sets
-B_markers <- c("MS4A1","CD79A","CD79B","CD19") 
-T_markers <- c("CD3D","CD3E","CD3G","TRAC") 
-Myeloid_markers <- c("LYZ","S100A8","S100A9","CTSS","FCGR3A") 
-Plasma_markers <- c("SDC1","MZB1","XBP1","PRDM1")
-
-marker_pairs <- combn(c("percent_B", "percent_T", "percent_Myeloid", "percent_Plasma"), 2, simplify = FALSE)
-
-for (sample_name in names(seurat_obj_clustered_list)){
-  
-  sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-  seurat_obj <- seurat_obj_clustered_list[[sample_name]]
-  
-  table(seurat_obj$scDblFinder.class)
-  
-  # Create directory for plots of specific sample
-  out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}/doublet")
-  dir.create(out_dir, showWarnings = FALSE)
-  
-  doublet_N_genes(seurat_obj, sample_name)
-  
-  seurat_obj$percent_B       <- PercentageFeatureSet(seurat_obj, features = B_markers)
-  seurat_obj$percent_T       <- PercentageFeatureSet(seurat_obj, features = T_markers)
-  seurat_obj$percent_Myeloid <- PercentageFeatureSet(seurat_obj, features = Myeloid_markers)
-  seurat_obj$percent_Plasma  <- PercentageFeatureSet(seurat_obj, features = Plasma_markers)
-  
-  for (pair in marker_pairs) {
-    
-    marker_1 <- pair[1]   # "B"
-    marker_2 <- pair[2]   # "T"
-    
-    # marker_1 <- "percent_B"
-    # marker_2 <- "percent_T"     
-    
-    doublet_dual_lineages(seurat_obj, sample_name, marker_1 = marker_1, marker_2 = marker_2)
-
-  }
-  
-}
-
-
+# # Functions for plotting
+# source("09_seurat_QC_clusters/script/functions.R")
+# 
+# # Add columns with co-expression of markers from different cell types (very likely doublets)
+# # Define marker sets
+# B_markers <- c("MS4A1","CD79A","CD79B","CD19") 
+# T_markers <- c("CD3D","CD3E","CD3G","TRAC") 
+# Myeloid_markers <- c("LYZ","S100A8","S100A9","CTSS","FCGR3A") 
+# Plasma_markers <- c("SDC1","MZB1","XBP1","PRDM1")
+# 
+# marker_pairs <- combn(c("percent_B", "percent_T", "percent_Myeloid", "percent_Plasma"), 2, simplify = FALSE)
+# 
+# for (sample_name in names(seurat_obj_clustered_list)){
+#   
+#   sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+#   seurat_obj <- seurat_obj_clustered_list[[sample_name]]
+#   
+#   table(seurat_obj$scDblFinder.class)
+#   
+#   # Create directory for plots of specific sample
+#   out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}/doublet")
+#   dir.create(out_dir, showWarnings = FALSE)
+#   
+#   doublet_N_genes(seurat_obj, sample_name)
+#   
+#   seurat_obj$percent_B       <- PercentageFeatureSet(seurat_obj, features = B_markers)
+#   seurat_obj$percent_T       <- PercentageFeatureSet(seurat_obj, features = T_markers)
+#   seurat_obj$percent_Myeloid <- PercentageFeatureSet(seurat_obj, features = Myeloid_markers)
+#   seurat_obj$percent_Plasma  <- PercentageFeatureSet(seurat_obj, features = Plasma_markers)
+#   
+#   for (pair in marker_pairs) {
+#     
+#     marker_1 <- pair[1]   # "B"
+#     marker_2 <- pair[2]   # "T"
+#     
+#     # marker_1 <- "percent_B"
+#     # marker_2 <- "percent_T"     
+#     
+#     doublet_dual_lineages(seurat_obj, sample_name, marker_1 = marker_1, marker_2 = marker_2)
+# 
+#   }
+#   
+# }
 
 ################################################################################ 
 ################################ DC Annotation #################################
@@ -278,6 +282,5 @@ seurat_obj_nonDC_list[[sample_name]] <- seurat_obj_nonDC
 # Save lists of DC and nonDC seurat objects 
 saveRDS(seurat_obj_DC_list, "09_annotation_pre_integration/out/seurat_obj_DC_list.rds")
 saveRDS(seurat_obj_nonDC_list, "09_annotation_pre_integration/out/seurat_obj_nonDC_list.rds")
-
 
 ################################## Annotation ##################################
