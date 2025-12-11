@@ -1,3 +1,4 @@
+.Rhistory
 00_data/*.fastq.gz
 00_data/*.xlsx
 00_data/refdata*
@@ -17,6 +18,7 @@
 06_seurat_load/out/
 07_seurat_QC/out/
 08_seurat_QC_filtering/out/
+09_seurat_QC_clusters/plot
 
 Gina_project.Rproj
 .Rproj.user

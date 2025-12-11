@@ -21,7 +21,7 @@ names(seurat_obj_list)
 # HH117-SI-MILF-INF-HLADR-AND-CD19 looks different than the others
 
 # Doublets out object 
-doublet_nFeature_test <- list()
+N_doublet <- list()
 
 # Extra plots
 # for (sample_name in names(seurat_obj_list)){
@@ -41,7 +41,7 @@ sample_name <- names(seurat_obj_list)[[1]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 8000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -68,7 +68,7 @@ sample_name <- names(seurat_obj_list)[[2]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -95,7 +95,7 @@ sample_name <- names(seurat_obj_list)[[3]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 8000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -122,7 +122,7 @@ sample_name <- names(seurat_obj_list)[[4]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 8000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -149,7 +149,7 @@ sample_name <- names(seurat_obj_list)[[5]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 8000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -176,7 +176,7 @@ sample_name <- names(seurat_obj_list)[[6]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -203,7 +203,7 @@ sample_name <- names(seurat_obj_list)[[7]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 7500)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -230,7 +230,7 @@ sample_name <- names(seurat_obj_list)[[8]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -257,7 +257,7 @@ sample_name <- names(seurat_obj_list)[[9]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 7500)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -284,7 +284,7 @@ sample_name <- names(seurat_obj_list)[[10]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -311,7 +311,7 @@ sample_name <- names(seurat_obj_list)[[11]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -340,7 +340,7 @@ sample_name <- names(seurat_obj_list)[[12]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 6000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -367,7 +367,7 @@ sample_name <- names(seurat_obj_list)[[13]]
 seurat_obj <- seurat_obj_list[[sample_name]]
 
 # Doublets out object 
-doublet_nFeature_test[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class, seurat_obj[[]]$nFeature_RNA > 8000)
+N_doublet[[sample_name]] <- table(seurat_obj[[]]$scDblFinder.class)
 
 Idents(seurat_obj) <- "orig.ident"
 
@@ -394,6 +394,6 @@ names(seurat_obj_QC_filtered_list)
 saveRDS(seurat_obj_QC_filtered_list, "08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 
 # Doublets out object 
-doublet_nFeature_test
-saveRDS(doublet_nFeature_test, "08_seurat_QC_filtering/out/doublet_nFeature_test.rds")
+N_doublet
+saveRDS(N_doublet, "08_seurat_QC_filtering/out/N_doublet.rds")
 
