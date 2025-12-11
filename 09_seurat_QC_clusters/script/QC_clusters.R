@@ -10,24 +10,26 @@ library(readxl)
 library(purrr) # map funciton 
 
 # Load data
-seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
+# seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
+seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_singlets_list.rds")
 
 # Check that doublets are removed 
 # seurat_obj_QC_filtered_list$`HH117-SILP-INF-PC`$scDblFinder.class %>% table()
 # seurat_obj_QC_filtered_list$`HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1`$scDblFinder.class %>% table()
 
 # Load Gina annotation file 
-broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "Very broad level")
-detailed_annot_file <- read_excel("00_data/Gene_markers_GL_HW.xlsx", sheet = "More detailed level")
+broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW_new.xlsx", sheet = "Very broad level")
+detailed_annot_file <- read_excel("00_data/Gene_markers_GL_HW_new.xlsx", sheet = "More detailed level")
 
 # Extract cell marker genes as lists
 broad_markers <- broad_annot_file %>% as.list()
 broad_markers <- map(broad_markers, ~ .x[!is.na(.x)])
-names(broad_markers) <- c("CD4_T_cell", "B_cell", "DC", "plasmablast_plasma_cell", "IGHG", "IGHA")
+names(broad_markers) <- c("T_cell", "B_cell", "DC", "plasmablast_plasma_cell")
 
 detailed_markers <- detailed_annot_file %>% as.list() %>% na.omit()
 detailed_markers <- map(detailed_markers, ~ .x[!is.na(.x)])
-names(detailed_markers) <- c("TFH_cell", "Naive_B_cell", "Memory_B_cell", "GC_B_cell")
+names(detailed_markers) <- c("TFH_cell", "Naive_B_cell", "Memory_B_cell", "GC_B_cell", 
+                             "Activation_markers", "Immunoglobulin_subsets", "Other_markers")
 
 #### Make sure the markers are in the same format as in the seurat object ###### 
 
@@ -40,6 +42,8 @@ source("09_annotation_pre_integration/script/functions.R")
 
 # Update marker format for the broad markers
 broad_markers <- update_marker_names(broad_markers, seurat_obj)
+
+# grep("CD21", rownames(seurat_obj), value = TRUE)
 
 # Update marker format for the detailed markers
 detailed_markers <- update_marker_names(detailed_markers, seurat_obj)
@@ -75,10 +79,10 @@ for (sample_name in names(seurat_obj_QC_filtered_list)){
   out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}")
   dir.create(out_dir, showWarnings = FALSE)
   
-  # Caluclate cell cycle scores
-  seurat_obj <- CellCycleScoring(seurat_obj,
-                                 s.features = s.genes,
-                                 g2m.features = g2m.genes)
+  # Caluclate cell cycle scores - Already calculated in QC
+  # seurat_obj <- CellCycleScoring(seurat_obj,
+  #                                s.features = s.genes,
+  #                                g2m.features = g2m.genes)
   
   # seurat_obj$S.Score - continuous 
   # seurat_obj$G2M.Score - continuous 
@@ -114,7 +118,8 @@ for (sample_name in names(seurat_obj_QC_filtered_list)){
   ############################################################################## 
   
   ###################### Dimplots with discrete features #######################
-  groups <- c("scDblFinder.class", "Phase")
+  # groups <- c("scDblFinder.class", "Phase")
+  groups <- c("Phase")
   
   for (group in groups){
     
@@ -133,7 +138,7 @@ for (sample_name in names(seurat_obj_QC_filtered_list)){
   ####################### FeaturePlot with broad_markers ####################### 
   for (markers in names(broad_markers)){
     
-    FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 2) + 
+    FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3) + 
       plot_annotation(title = glue("{markers}"),
                       caption = glue("N cells: {n_cells}"))
     
@@ -146,7 +151,7 @@ for (sample_name in names(seurat_obj_QC_filtered_list)){
   ##################### FeaturePlot with detailed_markers ######################
   for (markers in names(detailed_markers)){
     
-    FeaturePlot(seurat_obj, features = detailed_markers[[markers]], ncol = 2) + 
+    FeaturePlot(seurat_obj, features = detailed_markers[[markers]], ncol = 3) + 
       plot_annotation(title = glue("{markers}"), 
                       caption = glue("N cells: {n_cells}"))
     
