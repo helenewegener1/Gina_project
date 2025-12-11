@@ -1,4 +1,4 @@
-setwd("~/ciir/people/helweg/projects/Gina_project/")
+# setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)

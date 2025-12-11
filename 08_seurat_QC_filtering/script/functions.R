@@ -39,7 +39,7 @@ plot_qc <- function(seurat_obj, sample_name, version = "raw", filtering = ""){
 pre_filter_pipeline <- function(seurat_obj){
 
   # Remove doublets 
-  seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+  # seurat_obj <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
   
   # Compute QC metrics
   seurat_obj <- compute_QC_metrics(seurat_obj)

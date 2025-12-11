@@ -70,15 +70,24 @@ adt_summary <- data.frame(
 ) %>%
   arrange(desc(mean_CLR))
 
+expr <- as.data.frame(rowSums(expr_counts)) %>% rownames_to_column("ADT")
+colnames(expr) <- c("ADT", "summed_expr_ADT")
+expr
+
+adt_summary <- adt_summary %>% left_join(expr)
+rownames(adt_summary) <- adt_summary$ADT
+
 adt_summary %>% arrange(ADT)
 
 # Plot log count value range
 seurat_obj[["ADT"]]$counts %>% t() %>% as.data.frame() %>% 
   pivot_longer(cols = starts_with("Fol"), names_to = "ADT", values_to = "counts") %>% 
-  mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}')) %>% 
+  mutate(ADT_CLR_mean = glue('{ADT} CLR_mean: {round(adt_summary[ADT,"mean_CLR"], 2)}'),
+         summed_expr_ADT = glue('{ADT}: {adt_summary[ADT,"summed_expr_ADT"]}')
+         ) %>% 
   ggplot(aes(x = log(counts), fill = ADT_CLR_mean)) + 
   geom_density(alpha = 0.5) + 
-  facet_wrap(vars(ADT_CLR_mean)) + 
+  facet_wrap(vars(summed_expr_ADT)) + 
   theme_bw() + 
   theme(legend.position = "none") 
 
@@ -176,7 +185,7 @@ cut_close_to_noise_thresholds <- c(
   "Fol-14" = 1.5,
   "Fol-15" = 1.75,
   "Fol-16" = 2.5,
-  "Fol-17" = 1.5,
+  "Fol-17" = 1.5,  
   "Fol-18" = 1.25
 )
 
@@ -224,6 +233,10 @@ cut_close_to_signal_thresholds <- c(
 
 # Pull CLR ADT matrix
 clr_counts <- seurat_obj[["ADT"]]$data
+expr_counts <- seurat_obj[["ADT"]]$counts
+
+rowSums(clr_counts)
+rowSums(expr_counts)
 
 # ---------- UNIVERSAL FUNCTION ----------
 manual_call <- function(clr_matrix, thresholds) {

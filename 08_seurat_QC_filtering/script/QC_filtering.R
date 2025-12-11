@@ -394,7 +394,31 @@ rm(seurat_obj)
 names(seurat_obj_QC_filtered_list)
 saveRDS(seurat_obj_QC_filtered_list, "08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 
-# Doublets out object 
-doublet_nFeature_test
-saveRDS(doublet_nFeature_test, "08_seurat_QC_filtering/out/doublet_nFeature_test.rds")
+samples_names <- names(seurat_obj_QC_filtered_list)
+
+# Subset and save only singlets and only doublets in seperate objects 
+seurat_obj_QC_filtered_singlets_list <- rep(0, length(seurat_obj_QC_filtered_list)) %>% as.list()
+names(seurat_obj_QC_filtered_singlets_list) <- names(seurat_obj_QC_filtered_list)
+
+seurat_obj_QC_filtered_doublets_list <- rep(0, length(seurat_obj_QC_filtered_list)) %>% as.list()
+names(seurat_obj_QC_filtered_doublets_list) <- names(seurat_obj_QC_filtered_list)
+
+for (sample_name in samples_names){
+  
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
+  
+  # singlets 
+  seurat_obj_singlets <- subset(seurat_obj, subset = scDblFinder.class == "singlet")
+  seurat_obj_QC_filtered_singlets_list[[sample_name]] <- seurat_obj_singlets
+  
+  # doublets
+  seurat_obj_doublets <- subset(seurat_obj, subset = scDblFinder.class == "doublet")
+  seurat_obj_QC_filtered_doublets_list[[sample_name]] <- seurat_obj_doublets
+  
+}
+
+
+saveRDS(seurat_obj_QC_filtered_singlets_list, "08_seurat_QC_filtering/out/seurat_obj_QC_filtered_singlets_list.rds")
+saveRDS(seurat_obj_QC_filtered_doublets_list, "08_seurat_QC_filtering/out/seurat_obj_QC_filtered_doublets_list.rds")
 

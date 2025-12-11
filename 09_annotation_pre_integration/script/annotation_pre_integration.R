@@ -13,7 +13,7 @@ library(purrr) # map funciton
 # GINA SHOULD SEND OBJECT WITH BROAD ANNOTATIONS
 
 # FIRST CHECK THAT CELLS ARE STILL THE SAME FOR EACH OBJECT
-seurat_obj_clustered_list <- readRDS("09_seurat_QC_clusters/out/seurat_obj_clustered_list.rds")
+seurat_obj_clustered_list <- readRDS("09_seurat_QC_clusters/out/seurat_obj_QC_filtered_singlets_list.rds")
 DefaultAssay(seurat_obj_clustered_list$`HH117-SILP-INF-PC`)
 seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 
