@@ -1,4 +1,4 @@
-# setwd("~/ciir/people/helweg/projects/Gina_project/")
+setwd("~/ciir/people/helweg/projects/Gina_project/")
 
 # Load libraries 
 library(SeuratObject)
@@ -222,6 +222,10 @@ seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellrange
 #   seurat_obj_DoubletFinder[[sample_name]] <- seurat_obj
 # 
 # }
+############################# Get cell cycle score #############################
+
+s.genes <- Seurat::cc.genes.updated.2019$s.genes
+g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes # MKI67 in here 
 
 ################################ scDblFinder on cellranger filtered ################################ 
 
@@ -264,14 +268,43 @@ for (sample_name in names(seurat_obj_list)){
   print("scDblFinder")
   
   # Get count matrix
-  counts <- seurat_obj@assays$RNA$counts 
+  # counts <- seurat_obj@assays$RNA$counts 
+  
+  # Seurat workflow so I can UMAP
+  # seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+  # seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+  # seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  seurat_obj <- SCTransform(seurat_obj)
+  #Doublet detection
+  seurat_obj <- RunPCA(seurat_obj)
+  ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
+  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20)
+  seurat_obj <- FindClusters(seurat_obj, resolution = 0.1)
+  
+  # n_clusters - no relevant if we set the number of clusters in scDblFinder
+  n_clusters <- seurat_obj$seurat_clusters %>% unique()
+  n_clusters
+  table(seurat_obj$seurat_clusters)
+  
+  # Create SingelSellExperiment object
+  sce <- as.SingleCellExperiment(seurat_obj, assay = "RNA")
   
   # Run scDblFinder
-  sce <- scDblFinder(counts, dbr=0.1)
+  # clusters can also be a number - like N sorted cell types
+  # set dbr or not?
+  sce <- scDblFinder(sce, clusters = colData(sce)$seurat_clusters)#, dbr = 0.1)
+  
+  # n_clusters <- 6
+  # sce <- scDblFinder(sce, clusters = n_clusters)
+  
+  table(sce$scDblFinder.class)
+  table(sce$scDblFinder.cluster)
   
   # Access doublets and make metadata
   doublet_metadata <- data.frame(scDblFinder.class = sce$scDblFinder.class,
-                                 scDblFinder.score = sce$scDblFinder.score)
+                                 scDblFinder.score = sce$scDblFinder.score,
+                                 scDblFinder.cluster = sce$scDblFinder.cluster
+                                 )
   
   # Add doublet analysis to metadata
   seurat_obj <- AddMetaData(seurat_obj, doublet_metadata)
@@ -279,30 +312,27 @@ for (sample_name in names(seurat_obj_list)){
   # Number of singlet and doublet - Add to plot
   result <- table(seurat_obj@meta.data$scDblFinder.class, useNA = "ifany")
   
-  # Seurat workflow so I can UMAP
-  seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
-  seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
-  seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
-  #Doublet detection
-  seurat_obj <- RunPCA(seurat_obj)
-  ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
-  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20)
-  seurat_obj <- FindClusters(seurat_obj, resolution = 0.5)
   seurat_obj <- RunUMAP(seurat_obj, dims = 1:20)
   DimPlot(seurat_obj)
   
   # Plot
-  DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.class") + 
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.cluster") + 
+    labs(title = "scDblFinder", subtitle = glue("N clusters: {n_clusters}"))
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_clusters.pdf"), width = 7, height = 6)
+  
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.class", order = TRUE) + 
     labs(title = "scDblFinder", subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"))
-  ggsave(glue("07_seurat_QC/plot/scDblFinder/scDblFinder_{sample_name}.pdf"), width = 7, height = 6)
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder.pdf"), width = 7, height = 6)
   
-  FeaturePlot(seurat_obj, reduction = 'umap', features = "MKI67") + 
-    labs(title = "MKI67", subtitle = "MKI67 is a proliferation marker")
-  ggsave(glue("07_seurat_QC/plot/scDblFinder/MKI67_{sample_name}.pdf"), width = 7, height = 6)
+  # Cell cycle score
+  seurat_obj <- CellCycleScoring(seurat_obj,
+                                 s.features = s.genes,
+                                 g2m.features = g2m.genes)
   
-  # We do not do this here, but maybe later if it makes sense: Subset the Seurat object to include only "Singlet" cells
-  # seurat_obj_finalQC <- seurat_obj[, seurat_obj@meta.data[[DF.classification]] == "Singlet"]
-  # seurat_obj_finalQC_list[[sample_name]] <- seurat_obj_finalQC
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "Phase", order = TRUE) 
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_CellCyclePhase.pdf"), width = 7, height = 6)
+
+  table(seurat_obj$Phase, seurat_obj$scDblFinder.class)
   
   seurat_obj_QC[[sample_name]] <- seurat_obj
   
@@ -327,7 +357,7 @@ for (sample_name in names(seurat_obj_QC)){
     labs(caption = glue("singlets: {n_singlets}\ndoublets: {n_doublet}"))
   p2 <- VlnPlot(seurat_obj, features = "nCount_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend()
     
-  p <- p1/p2
+  p <- p1+p2
   
   ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_doublets_vs_nGENES.png"), width = 8, height = 12)
   
