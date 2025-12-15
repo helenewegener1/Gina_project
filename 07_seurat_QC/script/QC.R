@@ -16,9 +16,106 @@ library(SoupX)
 library(multtest)
 library(scDblFinder)
 library(decontX)
+library(readxl)
+library(purrr)
+library(patchwork)
 
 # Load data
 seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellranger filtered
+
+# Load Gina annotation file 
+broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW_new.xlsx", sheet = "Very broad level")
+
+# Extract cell marker genes as lists
+broad_markers <- broad_annot_file %>% as.list()
+broad_markers <- map(broad_markers, ~ .x[!is.na(.x)])
+names(broad_markers) <- c("T_cell", "B_cell", "DC", "plasmablast_plasma_cell")
+
+# Load sample to get genes that are in the data.  
+seurat_obj <- seurat_obj_list[["HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"]]
+
+source("09_annotation_pre_integration/script/functions.R")
+
+# Update marker format for the broad markers
+broad_markers <- update_marker_names(broad_markers, seurat_obj)
+
+########################### Define major cell types ############################
+
+# Prep to save clustered seurat objects
+seurat_obj_clustered_list <- rep(0, length(seurat_obj_list)) %>% as.list()
+names(seurat_obj_clustered_list) <- names(seurat_obj_list)
+
+# N PCs
+n_pcs <- list(
+  "HH117-SILP-INF-PC" = ,                        
+  "HH117-SILP-nonINF-PC" = ,                           
+  "HH117-SI-MILF-INF-HLADR-AND-CD19" = ,                 
+  "HH117-SI-MILF-nonINF-HLADR-AND-CD19" = ,             
+  "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = ,
+  "HH119-COLP-PC" = ,                                   
+  "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH" = ,    
+  "HH119-SILP-PC" = ,                                   
+  "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH" = ,      
+  "HH119-SI-PP-CD19-Pool1" = ,                        
+  "HH119-SI-PP-CD19-Pool2" = ,                        
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1" = ,                
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2" = 
+)
+
+for (sample_name in names(seurat_obj_list)){
+  
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  
+  # Get seurat object 
+  seurat_obj <- seurat_obj_list[[sample_name]]
+  
+  res <- 0.05
+  
+  # Seurat workflow so I can UMAP
+  seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+  seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+  seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  # seurat_obj <- SCTransform(seurat_obj)
+  #Doublet detection
+  seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
+  
+  ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
+  ggsave(glue("07_seurat_QC/plot/clusters/{sample_name}_elbow.png"), width = 9, height = 5.5)
+  # n_dims <- 3
+  # 
+  # seurat_obj <- FindNeighbors(seurat_obj, dims = 1:n_dims, verbose = FALSE)
+  # seurat_obj <- FindClusters(seurat_obj, resolution = res, verbose = FALSE)
+  # seurat_obj <- RunUMAP(seurat_obj, dims = 1:n_dims, verbose = FALSE)
+  # 
+  # n_cells <- ncol(seurat_obj)
+  # 
+  # # Plot
+  # DimPlot(seurat_obj, reduction = 'umap') + 
+  #   labs(title = sample_name, subtitle = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
+  # ggsave(glue("07_seurat_QC/plot/clusters/{sample_name}_clusters.pdf"), width = 7, height = 6)
+  
+  
+  
+  ####################### FeaturePlot with broad_markers ####################### 
+  # for (markers in names(broad_markers)){
+  #   
+  #   markers <- "B_cell"
+  #   # markers <- "plasmablast_plasma_cell"
+  #   
+  #   FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3, reduction = "umap") + 
+  #     plot_annotation(title = glue("{markers}"),
+  #                     caption = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
+  #   
+  #   # ggsave(glue("{out_dir}/{sample_name}_broad_{markers}.pdf"), width = 14, height = 12)
+  #   
+  # }
+  
+  
+  # Save object
+  # seurat_obj_clustered_list[[sample_name]] <- seurat_obj
+  
+}
+
 
 ################################################################################
 
@@ -229,6 +326,25 @@ g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes # MKI67 in here
 
 ################################ scDblFinder on cellranger filtered ################################ 
 
+# N cell types (clusters) expected
+# n_cell_types <- list(
+#   "HH117-SILP-INF-PC" = 1,                        
+#   "HH117-SILP-nonINF-PC" = 1,                           
+#   "HH117-SI-MILF-INF-HLADR-AND-CD19" = 2,                 
+#   "HH117-SI-MILF-nonINF-HLADR-AND-CD19" = 2,             
+#   "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = 5,
+#   "HH119-COLP-PC" = 1,                                   
+#   "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,    
+#   "HH119-SILP-PC" = 1,                                   
+#   "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,      
+#   "HH119-SI-PP-CD19-Pool1" = 2,                        
+#   "HH119-SI-PP-CD19-Pool2" = 2,                        
+#   "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1" = 3,                
+#   "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2" = 3 
+# )
+ 
+
+
 # Initialize final QC list 
 seurat_obj_QC <- list()
 
@@ -271,20 +387,20 @@ for (sample_name in names(seurat_obj_list)){
   # counts <- seurat_obj@assays$RNA$counts 
   
   # Seurat workflow so I can UMAP
-  # seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
-  # seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
-  # seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
-  seurat_obj <- SCTransform(seurat_obj)
+  seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+  seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+  seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  # seurat_obj <- SCTransform(seurat_obj)
   #Doublet detection
-  seurat_obj <- RunPCA(seurat_obj)
+  seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
   ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
-  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20)
-  seurat_obj <- FindClusters(seurat_obj, resolution = 0.1)
+  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:20, verbose = FALSE)
+  seurat_obj <- FindClusters(seurat_obj, resolution = 0.05, verbose = FALSE)
   
   # n_clusters - no relevant if we set the number of clusters in scDblFinder
-  n_clusters <- seurat_obj$seurat_clusters %>% unique()
-  n_clusters
-  table(seurat_obj$seurat_clusters)
+  # n_clusters <- seurat_obj$seurat_clusters %>% unique()
+  # n_clusters
+  # table(seurat_obj$seurat_clusters)
   
   # Create SingelSellExperiment object
   sce <- as.SingleCellExperiment(seurat_obj, assay = "RNA")
@@ -292,9 +408,9 @@ for (sample_name in names(seurat_obj_list)){
   # Run scDblFinder
   # clusters can also be a number - like N sorted cell types
   # set dbr or not? - if 10x, fine to leave undefined.
-  sce <- scDblFinder(sce, clusters = colData(sce)$seurat_clusters)#, dbr = 0.1)
+  sce <- scDblFinder(sce, clusters = colData(sce)$seurat_clusters)
   
-  # n_clusters <- 6
+  # n_clusters <- n_cell_types[[sample_name]] 
   # sce <- scDblFinder(sce, clusters = n_clusters)
   
   table(sce$scDblFinder.class)
@@ -303,7 +419,8 @@ for (sample_name in names(seurat_obj_list)){
   # Access doublets and make metadata
   doublet_metadata <- data.frame(scDblFinder.class = sce$scDblFinder.class,
                                  scDblFinder.score = sce$scDblFinder.score,
-                                 scDblFinder.cluster = sce$scDblFinder.cluster
+                                 scDblFinder.cluster = sce$scDblFinder.cluster, 
+                                 row.names = colnames(sce)
                                  )
   
   # Add doublet analysis to metadata
@@ -312,7 +429,7 @@ for (sample_name in names(seurat_obj_list)){
   # Number of singlet and doublet - Add to plot
   result <- table(seurat_obj@meta.data$scDblFinder.class, useNA = "ifany")
   
-  seurat_obj <- RunUMAP(seurat_obj, dims = 1:20)
+  seurat_obj <- RunUMAP(seurat_obj, dims = 1:20, verbose = FALSE)
   DimPlot(seurat_obj)
   
   # Plot
