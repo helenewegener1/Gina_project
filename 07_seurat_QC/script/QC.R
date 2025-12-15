@@ -291,7 +291,7 @@ for (sample_name in names(seurat_obj_list)){
   
   # Run scDblFinder
   # clusters can also be a number - like N sorted cell types
-  # set dbr or not?
+  # set dbr or not? - if 10x, fine to leave undefined.
   sce <- scDblFinder(sce, clusters = colData(sce)$seurat_clusters)#, dbr = 0.1)
   
   # n_clusters <- 6

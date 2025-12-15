@@ -15,6 +15,8 @@ library(ggsci)
 seurat_obj_nonDC_list <- readRDS("09_annotation_pre_integration/out/seurat_obj_nonDC_list.rds")
 seurat_obj <- seurat_obj_nonDC_list[["HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"]]
 
+seurat_obj$scDblFinder.class %>% table()
+
 # CLR normalization of ADT
 seurat_obj <- NormalizeData(seurat_obj, assay = "ADT", normalization.method = "CLR")
 

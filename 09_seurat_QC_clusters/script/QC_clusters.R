@@ -13,6 +13,8 @@ library(purrr) # map funciton
 # seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_singlets_list.rds")
 
+sample_names <- names(seurat_obj_QC_filtered_list)
+
 # Check that doublets are removed 
 # seurat_obj_QC_filtered_list$`HH117-SILP-INF-PC`$scDblFinder.class %>% table()
 # seurat_obj_QC_filtered_list$`HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1`$scDblFinder.class %>% table()
@@ -58,16 +60,17 @@ g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes # MKI67 in here
 ################################ Generate Plots ################################
 
 # Prep to save clustered seurat objects
-seurat_obj_clustered_list <- list()
+seurat_obj_clustered_list <- rep(0, length(seurat_obj_QC_filtered_list)) %>% as.list()
+names(seurat_obj_clustered_list) <- names(seurat_obj_QC_filtered_list)
 
 # Define number of dimensions for clustering and resolution of clusters. 
 # n_dim <- 20 # standard flow
-n_dim <- 30 # SCTransform
+# n_dim <- 30 # SCTransform
 res <- 0.3
 
 for (method in c("standard", "SCT")){
   
-  for (sample_name in names(seurat_obj_QC_filtered_list)){
+  for (sample_name in sample_names){
     
     # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
     
@@ -92,10 +95,12 @@ for (method in c("standard", "SCT")){
     
     ############################## Seurat workflow ###############################
     if (method == "standard"){
+      n_dim <- 20 # standard flow
       seurat_obj <- NormalizeData(seurat_obj)
       seurat_obj <- FindVariableFeatures(seurat_obj)
       seurat_obj <- ScaleData(seurat_obj)
     } else if (method == "SCT"){
+      n_dim <- 30 # SCTransform
       seurat_obj <- SCTransform(seurat_obj)
     }
     
@@ -183,67 +188,103 @@ for (method in c("standard", "SCT")){
   }
   
   # Save object 
-  saveRDS(seurat_obj_clustered_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_list_{method}.rds"))
+  saveRDS(seurat_obj_clustered_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_list_singlets_{method}.rds"))
 
 }
+
+rm(seurat_obj_clustered_list, seurat_obj_QC_filtered_list)
 
 
 ################################################################################ 
 ################################### Doublets ###################################
+################################################################################ 
 
-# Lars says to trust scdoubletfinder, so we do. 
+# Load data
+seurat_obj_QC_filtered_doublets_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_doublets_list.rds")
 
-# # Functions for plotting
-# source("09_seurat_QC_clusters/script/functions.R")
-# 
-# # Add columns with co-expression of markers from different cell types (very likely doublets)
-# # Define marker sets
-# B_markers <- c("MS4A1","CD79A","CD79B","CD19") 
-# T_markers <- c("CD3D","CD3E","CD3G","TRAC") 
-# Myeloid_markers <- c("LYZ","S100A8","S100A9","CTSS","FCGR3A") 
-# Plasma_markers <- c("SDC1","MZB1","XBP1","PRDM1")
-# 
-# marker_pairs <- combn(c("percent_B", "percent_T", "percent_Myeloid", "percent_Plasma"), 2, simplify = FALSE)
-# 
-# for (sample_name in names(seurat_obj_clustered_list)){
-#   
-#   sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-#   seurat_obj <- seurat_obj_clustered_list[[sample_name]]
-#   
-#   table(seurat_obj$scDblFinder.class)
-#   
-#   # Create directory for plots of specific sample
-#   out_dir <- glue("09_seurat_QC_clusters/plot/{sample_name}/doublet")
-#   dir.create(out_dir, showWarnings = FALSE)
-#   
-#   doublet_N_genes(seurat_obj, sample_name)
-#   
-#   seurat_obj$percent_B       <- PercentageFeatureSet(seurat_obj, features = B_markers)
-#   seurat_obj$percent_T       <- PercentageFeatureSet(seurat_obj, features = T_markers)
-#   seurat_obj$percent_Myeloid <- PercentageFeatureSet(seurat_obj, features = Myeloid_markers)
-#   seurat_obj$percent_Plasma  <- PercentageFeatureSet(seurat_obj, features = Plasma_markers)
-#   
-#   for (pair in marker_pairs) {
-#     
-#     marker_1 <- pair[1]   # "B"
-#     marker_2 <- pair[2]   # "T"
-#     
-#     # marker_1 <- "percent_B"
-#     # marker_2 <- "percent_T"     
-#     
-#     doublet_dual_lineages(seurat_obj, sample_name, marker_1 = marker_1, marker_2 = marker_2)
-# 
-#   }
-#   
-# }
+for (sample_name in sample_names){
+  
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  n_doublets <- seurat_obj_QC_filtered_doublets_list[[sample_name]] %>% ncol()
+  
+  print(sample_name)
+  print(glue("N doublets: {n_doublets}"))
+  print("---------------------------------------------")
+  
+}
+
+rm(seurat_obj_QC_filtered_doublets_list)
+
+################################################################################ 
+##################################### All ######################################
+################################################################################ 
+
+# Load data
+seurat_obj_QC_filtered_all_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
+
+seurat_obj_clustered_all_list <- rep(0, length(seurat_obj_QC_filtered_all_list)) %>% as.list()
+names(seurat_obj_clustered_all_list) <- names(seurat_obj_QC_filtered_all_list)
+
+method <- "standard"
+res <- 0.3
+
+for (sample_name in sample_names){
+  
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  seurat_obj <- seurat_obj_QC_filtered_all_list[[sample_name]]
+  
+  # Calculate and print doublet percentage
+  n_doublets <- count(seurat_obj$scDblFinder.class == "doublet") 
+  n_cells <- seurat_obj %>% ncol()
+  percentage_doublet <- round(n_doublets/n_cells * 100, 1)
+  
+  print(sample_name)
+  print(glue("Doublet percentage: {percentage_doublet}"))
+  print("---------------------------------------------")
+  
+  # invisible(
+  #   suppressWarnings(
+  #     suppressMessages({
+  if (method == "standard"){
+    n_dim <- 20 # standard flow
+    seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+    seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+    seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  } else if (method == "SCT"){
+    n_dim <- 30 # SCTransform
+    seurat_obj <- SCTransform(seurat_obj, verbose = FALSE)
+  }
+
+  DefaultAssay(seurat_obj)
+  seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
+  ElbowPlot(seurat_obj)
+  seurat_obj <- FindNeighbors(seurat_obj,  dims = 1:n_dim, verbose = FALSE)
+  seurat_obj <- FindClusters(seurat_obj, resolution = res, verbose = FALSE)
+  seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:n_dim, verbose = FALSE)
+  
+  seurat_obj_clustered_all_list[[sample_name]] <- seurat_obj
+  #     })
+  #   )
+  # )
+  
+}
+
+saveRDS(seurat_obj_clustered_all_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_all_list_{method}.rds"))
+
 
 ################################################################################ 
 ################################ DC Annotation #################################
+################################################################################ 
+
+# method <- "standard"
+# seurat_obj_QC_filtered_list <- readRDS(glue("09_seurat_QC_clusters/out/seurat_obj_clustered_list_{method}.rds"))
 
 # Venla annotate after human atlas projection of v.8 object?
 
 sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
 seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
+
+seurat_obj$scDblFinder.class %>% table()
 
 DimPlot(seurat_obj, label = TRUE, group.by = "RNA_snn_res.0.5") + NoLegend()
 
