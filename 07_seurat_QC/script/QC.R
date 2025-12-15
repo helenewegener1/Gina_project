@@ -79,7 +79,7 @@ for (sample_name in names(seurat_obj_list)){
   #Doublet detection
   seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
   
-  ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
+  ElbowPlot(seurat_obj) + labs(title = sample_name) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
   ggsave(glue("07_seurat_QC/plot/clusters/{sample_name}_elbow.png"), width = 9, height = 5.5)
   # n_dims <- 3
   # 
