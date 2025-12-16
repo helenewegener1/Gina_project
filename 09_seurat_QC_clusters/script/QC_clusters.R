@@ -8,6 +8,7 @@ library(ggplot2)
 library(patchwork)
 library(readxl)
 library(purrr) # map funciton 
+library(tidyr)
 
 # Load data
 # seurat_obj_QC_filtered_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
@@ -68,132 +69,139 @@ names(seurat_obj_clustered_list) <- names(seurat_obj_QC_filtered_list)
 # n_dim <- 30 # SCTransform
 res <- 0.3
 
-for (method in c("standard", "SCT")){
+# for (method in c("standard", "SCT")){
+method <- "standard"
+for (sample_name in sample_names){
   
-  for (sample_name in sample_names){
+  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+  # sample_name <- "HH119-COLP-PC"
+  
+  # Define specific seurat object 
+  seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
+  
+  # N cells 
+  n_cells <- ncol(seurat_obj)
+  
+  # Create directory for plots of specific sample
+  out_dir <- glue("09_seurat_QC_clusters/plot_{method}/{sample_name}")
+  dir.create(out_dir, showWarnings = FALSE)
+  
+  # Caluclate cell cycle scores - Already calculated in QC
+  # seurat_obj <- CellCycleScoring(seurat_obj,
+  #                                s.features = s.genes,
+  #                                g2m.features = g2m.genes)
+  
+  # seurat_obj$S.Score - continuous 
+  # seurat_obj$G2M.Score - continuous 
+  # seurat_obj$Phase - discrete 
+  
+  ############################## Seurat workflow ###############################
+  DefaultAssay(seurat_obj) <- "RNA"
+  
+  if (method == "standard"){
+    n_dim <- 15 # standard flow
+    seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
+    seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
+    seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
+  } else if (method == "SCT"){
+    n_dim <- 30 # SCTransform
+    seurat_obj <- SCTransform(seurat_obj, verbose = FALSE)
+  }
+  
+  DefaultAssay(seurat_obj)
+  
+  seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
+  ElbowPlot(seurat_obj)
+  seurat_obj <- FindNeighbors(seurat_obj, dims = 1:n_dim, verbose = FALSE)
+  seurat_obj <- FindClusters(seurat_obj, resolution = res, verbose = FALSE)
+  seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:n_dim, verbose = FALSE)
+  
+  ################## Feature plots with continuous features ####################
+  features <- c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", 
+                "scDblFinder.score", "S.Score", "G2M.Score")
+  for (feature in features){
     
-    # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-    
-    # Define specific seurat object 
-    seurat_obj <- seurat_obj_QC_filtered_list[[sample_name]]
-    
-    # N cells 
-    n_cells <- ncol(seurat_obj)
-    
-    # Create directory for plots of specific sample
-    out_dir <- glue("09_seurat_QC_clusters/plot_{method}/{sample_name}")
-    dir.create(out_dir, showWarnings = FALSE)
-    
-    # Caluclate cell cycle scores - Already calculated in QC
-    # seurat_obj <- CellCycleScoring(seurat_obj,
-    #                                s.features = s.genes,
-    #                                g2m.features = g2m.genes)
-    
-    # seurat_obj$S.Score - continuous 
-    # seurat_obj$G2M.Score - continuous 
-    # seurat_obj$Phase - discrete 
-    
-    ############################## Seurat workflow ###############################
-    if (method == "standard"){
-      n_dim <- 20 # standard flow
-      seurat_obj <- NormalizeData(seurat_obj)
-      seurat_obj <- FindVariableFeatures(seurat_obj)
-      seurat_obj <- ScaleData(seurat_obj)
-    } else if (method == "SCT"){
-      n_dim <- 30 # SCTransform
-      seurat_obj <- SCTransform(seurat_obj)
-    }
-    
-    DefaultAssay(seurat_obj)
-    seurat_obj <- RunPCA(seurat_obj)
-    ElbowPlot(seurat_obj)
-    seurat_obj <- FindNeighbors(seurat_obj,  dims = 1:n_dim)
-    seurat_obj <- FindClusters(seurat_obj, resolution = res)
-    seurat_obj <- RunUMAP(seurat_obj, reduction = "pca", dims = 1:n_dim)
-    
-    ################## Feature plots with continuous features ####################
-    features <- c("nFeature_RNA", "nCount_RNA", "percent.mt", "percent.ribo", 
-                  "scDblFinder.score", "S.Score", "G2M.Score")
-    for (feature in features){
-      
-      FeaturePlot(seurat_obj, features = feature) + 
-        labs(
-          title = feature, 
-          caption = glue("N cells: {n_cells}")
-        )
-      
-      ggsave(glue("{out_dir}/{sample_name}_{feature}.pdf"), width = 8, height = 7)
-      
-    }
-    
-    ############################################################################## 
-    
-    ###################### Dimplots with discrete features #######################
-    # groups <- c("scDblFinder.class", "Phase")
-    groups <- c("Phase")
-    
-    for (group in groups){
-      
-      DimPlot(seurat_obj, group.by = group) + 
-        labs(
-          title = group, 
-          caption = glue("N cells: {n_cells}")
-        )
-      
-      ggsave(glue("{out_dir}/{sample_name}_{group}.pdf"), width = 8, height = 7)
-      
-    }
-    
-    ############################################################################## 
-    
-    ####################### FeaturePlot with broad_markers ####################### 
-    for (markers in names(broad_markers)){
-      
-      FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3) + 
-        plot_annotation(title = glue("{markers}"),
-                        caption = glue("N cells: {n_cells}"))
-      
-      ggsave(glue("{out_dir}/{sample_name}_broad_{markers}.pdf"), width = 14, height = 12)
-      
-    }
-    
-    ############################################################################## 
-    
-    ##################### FeaturePlot with detailed_markers ######################
-    for (markers in names(detailed_markers)){
-      
-      FeaturePlot(seurat_obj, features = detailed_markers[[markers]], ncol = 3) + 
-        plot_annotation(title = glue("{markers}"), 
-                        caption = glue("N cells: {n_cells}"))
-      
-      ggsave(glue("{out_dir}/{sample_name}_detailed_{markers}.pdf"), width = 14, height = 18)
-      
-    }
-    
-    ############################################################################## 
-    
-    ################################# Clusters ################################# 
-    DimPlot(seurat_obj, label = TRUE, group.by = "seurat_clusters") + NoLegend() + 
+    FeaturePlot(seurat_obj, features = feature) + 
       labs(
-        title = "Seurat clusters", 
-        caption = glue("N cells: {n_cells}\nN dim: {n_dim}\nResolution: {res}")
+        title = feature, 
+        subtitle = sample_name,
+        caption = glue("N cells: {n_cells}")
       )
-    ggsave(glue("{out_dir}/{sample_name}_clusters.pdf"), width = 8, height = 8)
     
-    ############################################################################## 
-    
-    # Save clustered seurat object 
-    seurat_obj_clustered_list[[sample_name]] <- seurat_obj
+    ggsave(glue("{out_dir}/{sample_name}_{feature}.pdf"), width = 8, height = 7)
     
   }
   
-  # Save object 
-  saveRDS(seurat_obj_clustered_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_list_singlets_{method}.rds"))
-
+  ############################################################################## 
+  
+  ###################### Dimplots with discrete features #######################
+  # groups <- c("scDblFinder.class", "Phase")
+  groups <- c("Phase")
+  
+  for (group in groups){
+    
+    # group = "Phase"
+    DimPlot(seurat_obj, group.by = group) + 
+      labs(
+        title = group, 
+        subtitle = sample_name,
+        caption = glue("N cells: {n_cells}")
+      )
+    
+    ggsave(glue("{out_dir}/{sample_name}_{group}.pdf"), width = 8, height = 7)
+    
+  }
+  
+  ############################################################################## 
+  
+  ####################### FeaturePlot with broad_markers ####################### 
+  for (markers in names(broad_markers)){
+    
+    FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3) + 
+      plot_annotation(title = glue("{markers}"),
+                      subtitle = sample_name,
+                      caption = glue("N cells: {n_cells}"))
+    
+    ggsave(glue("{out_dir}/{sample_name}_broad_{markers}.pdf"), width = 14, height = 12)
+    
+  }
+  
+  ############################################################################## 
+  
+  ##################### FeaturePlot with detailed_markers ######################
+  for (markers in names(detailed_markers)){
+    
+    FeaturePlot(seurat_obj, features = detailed_markers[[markers]], ncol = 3) + 
+      plot_annotation(title = glue("{markers}"), 
+                      subtitle = sample_name,
+                      caption = glue("N cells: {n_cells}"))
+    
+    ggsave(glue("{out_dir}/{sample_name}_detailed_{markers}.pdf"), width = 14, height = 18)
+    
+  }
+  
+  ############################################################################## 
+  
+  ################################# Clusters ################################# 
+  DimPlot(seurat_obj, label = TRUE, group.by = "seurat_clusters") + NoLegend() + 
+    labs(
+      title = "Seurat clusters", 
+      subtitle = sample_name, 
+      caption = glue("N cells: {n_cells}\nN dim: {n_dim}\nResolution: {res}")
+    )
+  ggsave(glue("{out_dir}/{sample_name}_clusters.pdf"), width = 8, height = 8)
+  
+  ############################################################################## 
+  
+  # Save clustered seurat object 
+  seurat_obj_clustered_list[[sample_name]] <- seurat_obj
+  
 }
 
-rm(seurat_obj_clustered_list, seurat_obj_QC_filtered_list)
+# Save object 
+saveRDS(seurat_obj_clustered_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_list_singlets_{method}.rds"))
 
+rm(seurat_obj_clustered_list, seurat_obj_QC_filtered_list)
 
 ################################################################################ 
 ################################### Doublets ###################################
@@ -222,6 +230,7 @@ rm(seurat_obj_QC_filtered_doublets_list)
 # Load data
 seurat_obj_QC_filtered_all_list <- readRDS("08_seurat_QC_filtering/out/seurat_obj_QC_filtered_list.rds")
 
+# Prep to save clustered seurat objects
 seurat_obj_clustered_all_list <- rep(0, length(seurat_obj_QC_filtered_all_list)) %>% as.list()
 names(seurat_obj_clustered_all_list) <- names(seurat_obj_QC_filtered_all_list)
 
@@ -271,6 +280,70 @@ for (sample_name in sample_names){
 
 saveRDS(seurat_obj_clustered_all_list, glue("09_seurat_QC_clusters/out/seurat_obj_clustered_all_list_{method}.rds"))
 
+################################################################################ 
+################################## PC loadings #################################
+################################################################################ 
+
+# Sheet names in excel can only be 31 chars
+sheet_names <- list(
+  "HH117-SILP-INF-PC"                                = "HH117_SILP_INF_PC",
+  "HH117-SILP-nonINF-PC"                             = "HH117_SILP_nonINF_PC",
+  "HH117-SI-MILF-INF-HLADR-AND-CD19"                 = "HH117_MILF_INF_HLA_CD19",
+  "HH117-SI-MILF-nonINF-HLADR-AND-CD19"              = "HH117_MILF_nonINF_HLA_CD19",
+  "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = "HH117_PP_nonINF_HLA_CD19_GC_TFH",
+  "HH119-COLP-PC"                                   = "HH119_COLP_PC",
+  "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH"        = "HH119_SMILF_CD19_GC_PB_TFH",
+  "HH119-SILP-PC"                                   = "HH119_SILP_PC",
+  "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH"         = "HH119_MILF_CD19_GC_PB_TFH",
+  "HH119-SI-PP-CD19-Pool1"                           = "HH119_PP_CD19_P1",
+  "HH119-SI-PP-CD19-Pool2"                           = "HH119_PP_CD19_P2",
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1"              = "HH119_PP_GC_PB_TFH_P1",
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2"              = "HH119_PP_GC_PB_TFH_P2"
+)
+
+# Prep to save clustered seurat objects
+pc_loadings <- rep(0, length(seurat_obj_QC_filtered_all_list)) %>% as.list()
+names(pc_loadings) <- sheet_names
+
+for (sample_name in sample_names){
+  
+  seurat_obj <- seurat_obj_QC_filtered_all_list[[sample_name]]
+ 
+  loadings <- Loadings(seurat_obj, reduction = "pca")
+  
+  top_genes_per_pc <- loadings %>%
+    as.data.frame() %>%
+    tibble::rownames_to_column("gene") %>%
+    pivot_longer(
+      cols = starts_with("PC_"),
+      names_to = "PC",
+      values_to = "loading"
+    ) %>%
+    mutate(
+      PC = factor(PC, levels = paste0("PC_", 1:20))
+    ) %>%
+    group_by(PC) %>%
+    slice_max(abs(loading), n = 20)
+  
+  # Export to excel file
+  sheet_name <- sheet_names[[sample_name]]
+  pc_loadings[[sheet_name]] <- top_genes_per_pc
+  
+  # top_genes_per_pc
+  # View(top_genes_per_pc)
+   
+}
+
+# Export xlsx file 
+out_file <- glue("09_seurat_QC_clusters/out/PC_loadings_all_cells.xlsx")
+
+# Use openxlsx::write.xlsx, which takes the named list and writes
+# each element as a separate sheet (sheet name = list name, i.e., Cluster ID)
+openxlsx::write.xlsx(
+  x = pc_loadings,
+  file = out_file,
+  overwrite = TRUE # Overwrite the file if it already exists
+)
 
 ################################################################################ 
 ################################ DC Annotation #################################
