@@ -97,7 +97,7 @@ for (sample_name in sample_names){
   n_cells <- ncol(seurat_obj)
 
   # Plot
-  DimPlot(seurat_obj, reduction = 'umap') +
+  DimPlot(seurat_obj, reduction = 'umap', label = TRUE) + NoLegend() + 
     labs(title = sample_name, subtitle = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
   ggsave(glue("{out_dir}/{sample_name}_clusters.png"), width = 8, height = 6)
   
@@ -132,7 +132,7 @@ for (sample_name in sample_names){
   n_clusters <- seurat_obj_clustered_list[[sample_name]]$seurat_clusters %>% levels() %>% length()
 
   print(sample_name)
-  print(glue("N doublets: {n_clusters}"))
+  print(glue("N clusters: {n_clusters}"))
   print("---------------------------------------------")
 
 }
@@ -272,22 +272,22 @@ g2m.genes <- Seurat::cc.genes.updated.2019$g2m.genes # MKI67 in here
 
 ################################ scDblFinder on cellranger filtered ################################ 
 
-# N cell types (clusters) expected
-n_cell_types <- list(
-  "HH117-SILP-INF-PC" = 1,
-  "HH117-SILP-nonINF-PC" = 1,
-  "HH117-SI-MILF-INF-HLADR-AND-CD19" = 2,
-  "HH117-SI-MILF-nonINF-HLADR-AND-CD19" = 2,
-  "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = 5,
-  "HH119-COLP-PC" = 1,
-  "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,
-  "HH119-SILP-PC" = 1,
-  "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,
-  "HH119-SI-PP-CD19-Pool1" = 2,
-  "HH119-SI-PP-CD19-Pool2" = 2,
-  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1" = 3,
-  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2" = 3
-)
+# # N cell types (clusters) expected
+# n_cell_types <- list(
+#   "HH117-SILP-INF-PC" = 1,
+#   "HH117-SILP-nonINF-PC" = 1,
+#   "HH117-SI-MILF-INF-HLADR-AND-CD19" = 2,
+#   "HH117-SI-MILF-nonINF-HLADR-AND-CD19" = 2,
+#   "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = 5,
+#   "HH119-COLP-PC" = 1,
+#   "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,
+#   "HH119-SILP-PC" = 1,
+#   "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH" = 3,
+#   "HH119-SI-PP-CD19-Pool1" = 2,
+#   "HH119-SI-PP-CD19-Pool2" = 2,
+#   "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1" = 3,
+#   "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2" = 3
+# )
 
 
 
@@ -308,26 +308,26 @@ for (sample_name in sample_names){
   ############################ Ambiant RNA with decontX ############################
   # print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
   # print("decontX")
-  # 
-  # raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
-  # cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
-  # 
-  # if (is.null(names(raw_counts))){
-  #   
-  #   sce <- decontX(cell_counts, background = raw_counts)
-  #   
-  # } else if (length(names(raw_counts)) > 1) {
-  #   
-  #   sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
-  #   
-  # }
-  
-  # Get seurat object 
+
+  raw_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/multi/count/raw_feature_bc_matrix"))
+  cell_counts <- Read10X(data.dir = glue("05_run_cellranger/out_main/res_{sample_name}/outs/per_sample_outs/res_{sample_name}/count/sample_filtered_feature_bc_matrix"))
+
+  if (is.null(names(raw_counts))){
+
+    sce <- decontX(cell_counts, background = raw_counts)
+
+  } else if (length(names(raw_counts)) > 1) {
+
+    sce <- decontX(cell_counts$`Gene Expression`, background = raw_counts$`Gene Expression`)
+
+  }
+
+  # Get seurat object
   seurat_obj <- seurat_obj_clustered_list[[sample_name]]
-  
-  # Add decontX to contamination "score" to metadata 
-  # seurat_obj <- AddMetaData(seurat_obj, sce$contamination, "sce_contamination") 
-  
+
+  # Add decontX to contamination "score" to metadata
+  seurat_obj <- AddMetaData(seurat_obj, sce$contamination, "sce_contamination")
+
   # seurat_obj@meta.data$sce_contamination
   
   # print("----- ----- ----- ----- ----- ----- ----- ----- ----- ----- ----- -----")
@@ -344,7 +344,7 @@ for (sample_name in sample_names){
   # # seurat_obj <- SCTransform(seurat_obj)
   # #Doublet detection
   # seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
-  # ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
+  # ElbowPlot(seurat_obj) #to determine dimentions used for following steps in doublet detection. Adjust dims.
   # seurat_obj <- FindNeighbors(seurat_obj, dims = 1:n_dims, verbose = FALSE)
   # seurat_obj <- FindClusters(seurat_obj, resolution = 0.05, verbose = FALSE)
   
@@ -361,66 +361,71 @@ for (sample_name in sample_names){
   # set dbr or not? - if 10x, fine to leave undefined.
   sce <- scDblFinder(sce, clusters = colData(sce)$seurat_clusters, verbose = FALSE) # CHANGE TO GINA CLUSTERS
   
-  print(sample_name)
+  # Clustered works best
   n_cells <- ncol(seurat_obj)
   n_doublets <- table(sce$scDblFinder.class)[["doublet"]]
   percentage_doublet <- round((n_doublets/n_cells) * 100, 1)
-  print(percentage_doublet)
+  print(glue("with clusters: {percentage_doublet}"))
   # print("---------------------------------")
     
-  sce <- scDblFinder(sce, verbose = FALSE)
-  
-  print(sample_name)
-  n_cells <- ncol(seurat_obj)
-  n_doublets <- table(sce$scDblFinder.class)[["doublet"]]
-  percentage_doublet <- round((n_doublets/n_cells) * 100, 1)
-  print(percentage_doublet)
-  print("---------------------------------")
+  # sce <- scDblFinder(sce, verbose = FALSE)
+  # 
+  # n_cells <- ncol(seurat_obj)
+  # n_doublets <- table(sce$scDblFinder.class)[["doublet"]]
+  # percentage_doublet <- round((n_doublets/n_cells) * 100, 1)
+  # print(glue("without clusters: {percentage_doublet}"))
+  # print("---------------------------------")
 
-  
-  # n_clusters <- n_cell_types[[sample_name]] 
-  # sce <- scDblFinder(sce, clusters = n_clusters)
-  
-  # table(sce$scDblFinder.class)
-  # table(sce$scDblFinder.cluster)
-  # 
-  # # Access doublets and make metadata
-  # doublet_metadata <- data.frame(scDblFinder.class = sce$scDblFinder.class,
-  #                                scDblFinder.score = sce$scDblFinder.score,
-  #                                scDblFinder.cluster = sce$scDblFinder.cluster, 
-  #                                row.names = colnames(sce)
-  #                                )
-  # 
-  # # Add doublet analysis to metadata
-  # seurat_obj <- AddMetaData(seurat_obj, doublet_metadata)
-  # 
-  # # Number of singlet and doublet - Add to plot
-  # result <- table(seurat_obj@meta.data$scDblFinder.class, useNA = "ifany")
-  # 
-  # seurat_obj <- RunUMAP(seurat_obj, dims = 1:n_dims, verbose = FALSE)
-  # DimPlot(seurat_obj)
-  # 
-  # # Plot
-  # DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.cluster") + 
-  #   labs(title = "scDblFinder", subtitle = glue("N clusters: {n_clusters}"))
-  # ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_clusters.pdf"), width = 7, height = 6)
-  # 
-  # DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.class", order = TRUE) + 
-  #   labs(title = "scDblFinder", subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"))
-  # ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder.pdf"), width = 7, height = 6)
-  # 
-  # # Cell cycle score
-  # seurat_obj <- CellCycleScoring(seurat_obj,
-  #                                s.features = s.genes,
-  #                                g2m.features = g2m.genes)
-  # 
-  # DimPlot(seurat_obj, reduction = 'umap', group.by = "Phase", order = TRUE) 
-  # ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_CellCyclePhase.pdf"), width = 7, height = 6)
-  # 
-  # table(seurat_obj$Phase, seurat_obj$scDblFinder.class)
-  # 
-  # seurat_obj_QC[[sample_name]] <- seurat_obj
-  
+
+  table(sce$scDblFinder.class)
+  table(sce$scDblFinder.cluster)
+
+  # Access doublets and make metadata
+  doublet_metadata <- data.frame(scDblFinder.class = sce$scDblFinder.class,
+                                 scDblFinder.score = sce$scDblFinder.score,
+                                 scDblFinder.cluster = sce$scDblFinder.cluster,
+                                 row.names = colnames(sce)
+                                 )
+
+  # Add doublet analysis to metadata
+  seurat_obj <- AddMetaData(seurat_obj, doublet_metadata)
+
+  # Number of singlet and doublet - Add to plot
+  result <- table(seurat_obj@meta.data$scDblFinder.class, useNA = "ifany")
+
+  seurat_obj <- RunUMAP(seurat_obj, dims = 1:n_dims, verbose = FALSE)
+  DimPlot(seurat_obj)
+
+  # Plot
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "seurat_clusters") +
+    labs(
+      title = "scDblFinder", 
+      subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"), 
+      caption = glue("Doublet percentage: {percentage_doublet}")
+    )
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_clusters.pdf"), width = 7, height = 6)
+
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "scDblFinder.class", order = TRUE) +
+    labs(
+      title = "scDblFinder", 
+      subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"),
+      caption = glue("Doublet percentage: {percentage_doublet}")
+      )
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder.pdf"), width = 7, height = 6)
+
+  # Cell cycle score
+  seurat_obj <- CellCycleScoring(seurat_obj,
+                                 s.features = s.genes,
+                                 g2m.features = g2m.genes)
+
+  DimPlot(seurat_obj, reduction = 'umap', group.by = "Phase", order = TRUE) +
+    labs(subtitle = glue("N doublets: {result[[2]]}, N singlets: {result[[1]]}"), caption = glue("Doublet percentage: {percentage_doublet}"))
+  ggsave(glue("07_seurat_QC/plot/scDblFinder/{sample_name}_scDblFinder_CellCyclePhase.pdf"), width = 7, height = 6)
+
+  table(seurat_obj$Phase, seurat_obj$scDblFinder.class)
+
+  seurat_obj_QC[[sample_name]] <- seurat_obj
+
 }
 
 #################### Export list of Seurat objects with QC metrices in metadata #################### 
@@ -430,27 +435,27 @@ saveRDS(seurat_obj_QC, "07_seurat_QC/out/seurat_obj_QC.rds")
 # doublet check 
 # Doublet class VS nFeature_RNA and nCount_RNA
 
-for (sample_name in names(seurat_obj_QC)){
-  
-  # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
-  seurat_obj <- seurat_obj_QC[[sample_name]]
-  
-  n_singlets <- seurat_obj$scDblFinder.class %>% str_count("singlet") %>% sum()
-  n_doublet <- seurat_obj$scDblFinder.class %>% str_count("doublet") %>% sum()
-  
-  p1 <- VlnPlot(seurat_obj, features = "nFeature_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend() + 
-    labs(caption = glue("singlets: {n_singlets}\ndoublets: {n_doublet}"))
-  p2 <- VlnPlot(seurat_obj, features = "nCount_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend()
-    
-  p <- p1+p2
-  
-  ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_doublets_vs_nGENES.png"), width = 8, height = 12)
-  
-  FeatureScatter(seurat_obj, feature1 = "nFeature_RNA", feature2 = "nCount_RNA", group.by = "scDblFinder.class", log = TRUE) 
-  ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_nFeature_vs_nCount.png"), width = 10, height = 8)
-    
-  
-}
+# for (sample_name in names(seurat_obj_QC)){
+# 
+#   # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
+#   seurat_obj <- seurat_obj_QC[[sample_name]]
+# 
+#   n_singlets <- seurat_obj$scDblFinder.class %>% str_count("singlet") %>% sum()
+#   n_doublet <- seurat_obj$scDblFinder.class %>% str_count("doublet") %>% sum()
+# 
+#   p1 <- VlnPlot(seurat_obj, features = "nFeature_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend() +
+#     labs(caption = glue("singlets: {n_singlets}\ndoublets: {n_doublet}"))
+#   p2 <- VlnPlot(seurat_obj, features = "nCount_RNA", group.by = "scDblFinder.class", layer = "counts") + NoLegend()
+# 
+#   p <- p1+p2
+# 
+#   ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_doublets_vs_nGENES.png"), width = 8, height = 12)
+# 
+#   FeatureScatter(seurat_obj, feature1 = "nFeature_RNA", feature2 = "nCount_RNA", group.by = "scDblFinder.class", log = TRUE)
+#   ggsave(glue("07_seurat_QC/plot/doublets/{sample_name}_nFeature_vs_nCount.png"), width = 10, height = 8)
+# 
+# 
+# }
 
 
 
