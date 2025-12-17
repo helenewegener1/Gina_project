@@ -23,8 +23,9 @@
 07_seurat_QC/out/
 08_seurat_QC_filtering/out/
 09_seurat_QC_clusters/out/
-09_annotation_pre_integration/out/
+09_annotation_pre_integration
 10_ADT_demultiplex/out/
+12_vdj
 
 Gina_project.Rproj
 .Rproj.user

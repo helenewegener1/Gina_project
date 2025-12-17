@@ -25,11 +25,17 @@ seurat_obj_list <- readRDS("06_seurat_load/out/seurat_obj_list.rds") # cellrange
 
 # Load Gina annotation file 
 broad_annot_file <- read_excel("00_data/Gene_markers_GL_HW_new.xlsx", sheet = "Very broad level")
+detailed_annot_file <- read_excel("00_data/Gene_markers_GL_HW_new.xlsx", sheet = "More detailed level")
 
 # Extract cell marker genes as lists
 broad_markers <- broad_annot_file %>% as.list()
 broad_markers <- map(broad_markers, ~ .x[!is.na(.x)])
 names(broad_markers) <- c("T_cell", "B_cell", "DC", "plasmablast_plasma_cell")
+
+detailed_markers <- detailed_annot_file %>% as.list() %>% na.omit()
+detailed_markers <- map(detailed_markers, ~ .x[!is.na(.x)])
+names(detailed_markers) <- c("TFH_cell", "Naive_B_cell", "Memory_B_cell", "GC_B_cell", 
+                             "Activation_markers", "Immunoglobulin_subsets", "Other_markers")
 
 # Load sample to get genes that are in the data.  
 seurat_obj <- seurat_obj_list[["HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"]]
@@ -69,6 +75,8 @@ for (sample_name in sample_names){
   # sample_name <- "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH"
   # sample_name <- "HH119-COLP-PC"
   
+  print(glue("--- Processing: {sample_name} ---"))
+  
   # Get seurat object 
   seurat_obj <- seurat_obj_list[[sample_name]]
   
@@ -82,8 +90,6 @@ for (sample_name in sample_names){
   seurat_obj <- NormalizeData(seurat_obj, verbose = FALSE)
   seurat_obj <- FindVariableFeatures(seurat_obj, verbose = FALSE)
   seurat_obj <- ScaleData(seurat_obj, verbose = FALSE)
-  # seurat_obj <- SCTransform(seurat_obj)
-  #Doublet detection
   seurat_obj <- RunPCA(seurat_obj, verbose = FALSE)
   
   ElbowPlot(seurat_obj) + labs(title = sample_name) #to determine dimentions used for following steps in doublet detection. Adjust dims. 
@@ -98,25 +104,46 @@ for (sample_name in sample_names){
 
   # Plot
   DimPlot(seurat_obj, reduction = 'umap', label = TRUE) + NoLegend() + 
-    labs(title = sample_name, subtitle = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
-  ggsave(glue("{out_dir}/{sample_name}_clusters.png"), width = 8, height = 6)
+    labs(title = "Seurat clusters",
+         subtitle = sample_name, 
+         caption = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
+  ggsave(glue("{out_dir}/{sample_name}_clusters.png"), width = 8, height = 8)
   
-  
-  
-  ###################### FeaturePlot with broad_markers #######################
+  ####################### FeaturePlot with broad_markers ####################### 
   for (markers in names(broad_markers)){
-
-    # markers <- "B_cell"
-    # markers <- "plasmablast_plasma_cell"
-
-    FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3, reduction = "umap") +
-      plot_annotation(title = glue("{markers}"),
-                      caption = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
-
-    ggsave(glue("{out_dir}/{sample_name}_broad_{markers}.png"), width = 14, height = 12)
     
-
+    FeaturePlot(seurat_obj, features = broad_markers[[markers]], ncol = 3) + 
+      plot_annotation(title = markers,
+                      subtitle = sample_name,
+                      caption = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
+    
+    # Adjust heigh of plot to number of markers
+    n_markers <- broad_markers[[markers]] %>% length()
+    height <- (n_markers/3) * 4
+    
+    ggsave(glue("{out_dir}/{sample_name}_broad_{markers}.pdf"), width = 14, height = height)
+    
   }
+  
+  ############################################################################## 
+  
+  ##################### FeaturePlot with detailed_markers ######################
+  for (markers in names(detailed_markers)){
+    
+    FeaturePlot(seurat_obj, features = detailed_markers[[markers]], ncol = 3) + 
+      plot_annotation(title = markers, 
+                      subtitle = sample_name,
+                      caption = glue("N cells: {n_cells}\nN dim: {n_dims}\nresolution: {res}"))
+    
+    # Adjust heigh of plot to number of markers
+    n_markers <- detailed_markers[[markers]] %>% length()
+    height <- (n_markers/3) * 4
+    
+    ggsave(glue("{out_dir}/{sample_name}_detailed_{markers}.pdf"), width = 14, height = height)
+    
+  }
+  
+  ##############################################################################
   
   # Save object
   seurat_obj_clustered_list[[sample_name]] <- seurat_obj
@@ -138,8 +165,151 @@ for (sample_name in sample_names){
 }
 
 ################################################################################
-########################## GINA CELL TYPE ANNOTATION ###########################
+############################ GINA CLUSTER MERGING ##############################
 ################################################################################
+
+seurat_obj_clustered_list <- readRDS("07_seurat_QC/out/seurat_obj_clustered_list.rds")
+
+merged_clusters <- list(
+  
+  "HH117-SILP-INF-PC" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = ""
+  ),
+  
+  "HH117-SILP-nonINF-PC" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = ""
+  ),
+  
+  "HH117-SI-MILF-INF-HLADR-AND-CD19" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = ""
+  ),
+  
+  "HH117-SI-MILF-nonINF-HLADR-AND-CD19" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = "", 
+    "7" = "",
+    "8" = ""
+  ),
+  
+  "HH117-SI-PP-nonINF-HLADR-AND-CD19-AND-GC-AND-TFH" = c(
+    "0" = "0",
+    "1" = "1",
+    "2" = "2",
+    "3" = "2",
+    "4" = "3",
+    "5" = "4", 
+    "6" = "5", 
+    "7" = "6"
+  ),
+  
+  "HH119-COLP-PC" = c(
+    "0" = "",
+    "1" = "",
+    "2" = ""
+  ),
+  
+  "HH119-CO-SMILF-CD19-AND-GC-AND-PB-AND-TFH" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = ""
+  ),
+  
+  "HH119-SILP-PC" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = "", 
+    "7" = ""
+  ),
+  
+  "HH119-SI-MILF-CD19-AND-GC-AND-PB-AND-TFH" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = "", 
+    "7" = ""
+  ),
+  
+  "HH119-SI-PP-CD19-Pool1" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = "", 
+    "7" = ""
+  ),
+  
+  "HH119-SI-PP-CD19-Pool2" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = ""
+  ),
+  
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool1" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = "", 
+    "7" = ""
+  ),
+  
+  "HH119-SI-PP-GC-AND-PB-AND-TFH-Pool2" = c(
+    "0" = "",
+    "1" = "",
+    "2" = "",
+    "3" = "",
+    "4" = "",
+    "5" = "", 
+    "6" = ""
+  ) 
+    
+)
+  
+  
+  
+  
+  
+
+
+
+
 
 # # Rename clusters
 # new.cluster.ids <- rep(0, length(seurat_obj_clustered_list)) %>% as.list()
